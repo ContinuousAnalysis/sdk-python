@@ -12,6 +12,7 @@ from ...client.api.compute.get_sandbox import asyncio as get_sandbox
 from ...client.api.compute.list_sandboxes import asyncio as list_sandboxes
 from ...client.api.compute.update_sandbox import asyncio as update_sandbox
 from ...client.client import client
+from ...client.errors import ControlPlaneError
 from ...client.models import (
     Metadata,
     MetadataLabels,
@@ -28,6 +29,7 @@ from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
 from ...common.settings import settings
+from ...errors import BlaxelAPIError
 from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
@@ -44,12 +46,11 @@ from .session import SandboxSessions
 from .system import SandboxSystem
 
 
-class SandboxAPIError(Exception):
+class SandboxAPIError(BlaxelAPIError):
     """Exception raised when sandbox API returns an error."""
 
     def __init__(self, message: str, status_code: int | None = None, code: str | None = None):
-        super().__init__(message)
-        self.status_code = status_code
+        super().__init__(message=message, status_code=status_code, error_code=code)
         self.code = code
 
 
@@ -306,12 +307,15 @@ class SandboxInstance:
 
     @classmethod
     async def get(cls, sandbox_name: str) -> "SandboxInstance":
-        response = await get_sandbox(
-            sandbox_name,
-            client=client,
-        )
+        try:
+            response = await get_sandbox(
+                sandbox_name,
+                client=client,
+            )
+        except ControlPlaneError as e:
+            raise SandboxAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
 
-        # Check if response is an error
+        # Fallback for raise_on_error=False
         if isinstance(response, Error):
             status_code = response.code if response.code is not UNSET else None
             message = response.message if response.message is not UNSET else response.error
