@@ -249,12 +249,15 @@ class SyncSandboxInstance:
                 sandbox.spec.runtime = SandboxRuntime(image=default_image, memory=default_memory)
             sandbox.spec.runtime.image = sandbox.spec.runtime.image or default_image
             sandbox.spec.runtime.memory = sandbox.spec.runtime.memory or default_memory
-        response = create_sandbox(
-            client=client,
-            body=sandbox,
-        )
+        try:
+            response = create_sandbox(
+                client=client,
+                body=sandbox,
+            )
+        except ControlPlaneError as e:
+            raise SandboxAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
 
-        # Check if response is an error
+        # Fallback for raise_on_error=False
         if isinstance(response, SandboxError):
             status_code = response.status_code if response.status_code is not UNSET else None
             code = response.code if response.code else None
@@ -316,11 +319,14 @@ class SyncSandboxInstance:
             updated_sandbox.metadata.labels.update(metadata.labels)
         if metadata.display_name is not None:
             updated_sandbox.metadata.display_name = metadata.display_name
-        response = update_sandbox(
-            sandbox_name=sandbox_name,
-            client=client,
-            body=updated_sandbox,
-        )
+        try:
+            response = update_sandbox(
+                sandbox_name=sandbox_name,
+                client=client,
+                body=updated_sandbox,
+            )
+        except ControlPlaneError as e:
+            raise SandboxAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
         return cls(response)
 
     @classmethod
@@ -347,11 +353,14 @@ class SyncSandboxInstance:
         updated_sandbox.spec.runtime.ttl = ttl
 
         # Call the update API
-        response = update_sandbox(
-            sandbox_name=sandbox_name,
-            client=client,
-            body=updated_sandbox,
-        )
+        try:
+            response = update_sandbox(
+                sandbox_name=sandbox_name,
+                client=client,
+                body=updated_sandbox,
+            )
+        except ControlPlaneError as e:
+            raise SandboxAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
 
         return cls(response)
 
@@ -381,11 +390,14 @@ class SyncSandboxInstance:
         updated_sandbox.spec.lifecycle = lifecycle
 
         # Call the update API
-        response = update_sandbox(
-            sandbox_name=sandbox_name,
-            client=client,
-            body=updated_sandbox,
-        )
+        try:
+            response = update_sandbox(
+                sandbox_name=sandbox_name,
+                client=client,
+                body=updated_sandbox,
+            )
+        except ControlPlaneError as e:
+            raise SandboxAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
 
         return cls(response)
 
@@ -436,10 +448,13 @@ class SyncSandboxInstance:
 
 def _delete_sandbox_by_name(sandbox_name: str) -> Sandbox:
     """Delete a sandbox by name."""
-    response = delete_sandbox(
-        sandbox_name,
-        client=client,
-    )
+    try:
+        response = delete_sandbox(
+            sandbox_name,
+            client=client,
+        )
+    except ControlPlaneError as e:
+        raise SandboxAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
     return response
 
 
