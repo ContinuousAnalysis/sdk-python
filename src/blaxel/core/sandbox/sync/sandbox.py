@@ -455,6 +455,8 @@ def _delete_sandbox_by_name(sandbox_name: str) -> Sandbox:
         )
     except ControlPlaneError as e:
         raise SandboxAPIError(str(e), status_code=e.status_code, code=e.error_code) from e
+    if response is None:
+        raise ValueError(f"Sandbox {sandbox_name} not found")
     return response
 
 
