@@ -15,19 +15,18 @@ from ..client.api.drives.list_drives import sync as list_drives_sync
 from ..client.api.drives.update_drive import asyncio as update_drive
 from ..client.api.drives.update_drive import sync as update_drive_sync
 from ..client.client import client
-from ..client.errors import UnexpectedStatus
+from ..client.errors import BlaxelAPIError, UnexpectedStatus
 from ..client.models import Drive, DriveSpec, Metadata
 from ..client.models.error import Error
 from ..client.types import UNSET
 from ..common.settings import settings
 
 
-class DriveAPIError(Exception):
+class DriveAPIError(BlaxelAPIError):
     """Exception raised when drive API returns an error."""
 
     def __init__(self, message: str, status_code: int | None = None, code: str | None = None):
-        super().__init__(message)
-        self.status_code = status_code
+        super().__init__(message, status_code=status_code, error_code=code)
         self.code = code
 
 
