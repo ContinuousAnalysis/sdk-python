@@ -54,8 +54,8 @@ def _load_telemetry_state() -> dict:
             data = telemetry_path.read_text(encoding="utf-8")
             parsed = json.loads(data)
             _telemetry_state = {
+                **parsed,
                 "distinct_id": parsed.get("distinct_id", ""),
-                "cli": parsed.get("cli"),
                 "sdks": parsed.get("sdks") or {},
             }
         except Exception:
