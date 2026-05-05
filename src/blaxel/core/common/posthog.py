@@ -19,6 +19,7 @@ _POSTHOG_HOST = "https://us.i.posthog.com"
 
 # Telemetry state file path: ~/.blaxel/telemetry.json
 _telemetry_state: dict | None = None
+_telemetry_lock = threading.Lock()
 
 
 def _get_posthog_key() -> str:
@@ -39,28 +40,29 @@ def _get_telemetry_path() -> Path | None:
 def _load_telemetry_state() -> dict:
     """Load the telemetry state from disk."""
     global _telemetry_state
-    if _telemetry_state is not None:
+    with _telemetry_lock:
+        if _telemetry_state is not None:
+            return _telemetry_state
+
+        _telemetry_state = {"distinct_id": "", "sdks": {}}
+
+        telemetry_path = _get_telemetry_path()
+        if not telemetry_path:
+            return _telemetry_state
+
+        try:
+            data = telemetry_path.read_text(encoding="utf-8")
+            parsed = json.loads(data)
+            _telemetry_state = {
+                "distinct_id": parsed.get("distinct_id", ""),
+                "cli": parsed.get("cli"),
+                "sdks": parsed.get("sdks") or {},
+            }
+        except Exception:
+            # File doesn't exist or is invalid - use defaults
+            pass
+
         return _telemetry_state
-
-    _telemetry_state = {"distinct_id": "", "sdks": {}}
-
-    telemetry_path = _get_telemetry_path()
-    if not telemetry_path:
-        return _telemetry_state
-
-    try:
-        data = telemetry_path.read_text(encoding="utf-8")
-        parsed = json.loads(data)
-        _telemetry_state = {
-            "distinct_id": parsed.get("distinct_id", ""),
-            "cli": parsed.get("cli"),
-            "sdks": parsed.get("sdks") or {},
-        }
-    except Exception:
-        # File doesn't exist or is invalid - use defaults
-        pass
-
-    return _telemetry_state
 
 
 def _save_telemetry_state(state: dict) -> None:
