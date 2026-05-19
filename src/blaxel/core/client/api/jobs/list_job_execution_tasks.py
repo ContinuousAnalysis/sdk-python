@@ -5,16 +5,18 @@ import httpx
 
 from ... import errors
 from ...client import Client
-from ...models.drive_list import DriveList
-from ...models.list_drives_sort import ListDrivesSort
+from ...models.job_execution_task_list import JobExecutionTaskList
+from ...models.list_job_execution_tasks_sort import ListJobExecutionTasksSort
 from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
+    job_id: str,
+    execution_id: str,
     *,
     cursor: Union[Unset, str] = UNSET,
     limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListDrivesSort] = UNSET,
+    sort: Union[Unset, ListJobExecutionTasksSort] = UNSET,
     q: Union[Unset, str] = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
@@ -35,28 +37,38 @@ def _get_kwargs(
 
     _kwargs: dict[str, Any] = {
         "method": "get",
-        "url": "/drives",
+        "url": f"/jobs/{job_id}/executions/{execution_id}/tasks",
         "params": params,
     }
 
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, DriveList] | None:
+def _parse_response(
+    *, client: Client, response: httpx.Response
+) -> Union[Any, JobExecutionTaskList] | None:
     if response.status_code == 200:
-        response_200 = DriveList.from_dict(response.json())
+        response_200 = JobExecutionTaskList.from_dict(response.json())
 
         return response_200
-    if response.status_code == 401:
-        response_401 = cast(Any, None)
-        return response_401
+    if response.status_code == 400:
+        response_400 = cast(Any, None)
+        return response_400
+    if response.status_code == 404:
+        response_404 = cast(Any, None)
+        return response_404
+    if response.status_code == 500:
+        response_500 = cast(Any, None)
+        return response_500
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Any, DriveList]]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[Union[Any, JobExecutionTaskList]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -66,24 +78,27 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Uni
 
 
 def sync_detailed(
+    job_id: str,
+    execution_id: str,
     *,
     client: Client,
     cursor: Union[Unset, str] = UNSET,
     limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListDrivesSort] = UNSET,
+    sort: Union[Unset, ListJobExecutionTasksSort] = UNSET,
     q: Union[Unset, str] = UNSET,
-) -> Response[Union[Any, DriveList]]:
-    """List drives
+) -> Response[Union[Any, JobExecutionTaskList]]:
+    """List execution tasks
 
-     Returns all drives in the workspace. Drives provide persistent storage that can be attached to
-    agents, functions, and sandboxes. Starting with API version 2026-04-28, the response wraps items in
-    `{data, meta}` and supports cursor pagination via the `cursor` and `limit` query parameters; older
-    versions keep returning a bare array with all drives.
+     Returns one cursor-paginated page of an execution's tasks. Tasks are derived from event history each
+    request; only the in-memory slicing is paginated, the events scan still fetches the whole event log
+    behind the scenes. Available starting with API version 2026-04-28.
 
     Args:
+        job_id (str):
+        execution_id (str):
         cursor (Union[Unset, str]):
         limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListDrivesSort]):
+        sort (Union[Unset, ListJobExecutionTasksSort]):
         q (Union[Unset, str]):
 
     Raises:
@@ -91,10 +106,12 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, DriveList]]
+        Response[Union[Any, JobExecutionTaskList]]
     """
 
     kwargs = _get_kwargs(
+        job_id=job_id,
+        execution_id=execution_id,
         cursor=cursor,
         limit=limit,
         sort=sort,
@@ -109,24 +126,27 @@ def sync_detailed(
 
 
 def sync(
+    job_id: str,
+    execution_id: str,
     *,
     client: Client,
     cursor: Union[Unset, str] = UNSET,
     limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListDrivesSort] = UNSET,
+    sort: Union[Unset, ListJobExecutionTasksSort] = UNSET,
     q: Union[Unset, str] = UNSET,
-) -> Union[Any, DriveList] | None:
-    """List drives
+) -> Union[Any, JobExecutionTaskList] | None:
+    """List execution tasks
 
-     Returns all drives in the workspace. Drives provide persistent storage that can be attached to
-    agents, functions, and sandboxes. Starting with API version 2026-04-28, the response wraps items in
-    `{data, meta}` and supports cursor pagination via the `cursor` and `limit` query parameters; older
-    versions keep returning a bare array with all drives.
+     Returns one cursor-paginated page of an execution's tasks. Tasks are derived from event history each
+    request; only the in-memory slicing is paginated, the events scan still fetches the whole event log
+    behind the scenes. Available starting with API version 2026-04-28.
 
     Args:
+        job_id (str):
+        execution_id (str):
         cursor (Union[Unset, str]):
         limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListDrivesSort]):
+        sort (Union[Unset, ListJobExecutionTasksSort]):
         q (Union[Unset, str]):
 
     Raises:
@@ -134,10 +154,12 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, DriveList]
+        Union[Any, JobExecutionTaskList]
     """
 
     return sync_detailed(
+        job_id=job_id,
+        execution_id=execution_id,
         client=client,
         cursor=cursor,
         limit=limit,
@@ -147,24 +169,27 @@ def sync(
 
 
 async def asyncio_detailed(
+    job_id: str,
+    execution_id: str,
     *,
     client: Client,
     cursor: Union[Unset, str] = UNSET,
     limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListDrivesSort] = UNSET,
+    sort: Union[Unset, ListJobExecutionTasksSort] = UNSET,
     q: Union[Unset, str] = UNSET,
-) -> Response[Union[Any, DriveList]]:
-    """List drives
+) -> Response[Union[Any, JobExecutionTaskList]]:
+    """List execution tasks
 
-     Returns all drives in the workspace. Drives provide persistent storage that can be attached to
-    agents, functions, and sandboxes. Starting with API version 2026-04-28, the response wraps items in
-    `{data, meta}` and supports cursor pagination via the `cursor` and `limit` query parameters; older
-    versions keep returning a bare array with all drives.
+     Returns one cursor-paginated page of an execution's tasks. Tasks are derived from event history each
+    request; only the in-memory slicing is paginated, the events scan still fetches the whole event log
+    behind the scenes. Available starting with API version 2026-04-28.
 
     Args:
+        job_id (str):
+        execution_id (str):
         cursor (Union[Unset, str]):
         limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListDrivesSort]):
+        sort (Union[Unset, ListJobExecutionTasksSort]):
         q (Union[Unset, str]):
 
     Raises:
@@ -172,10 +197,12 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, DriveList]]
+        Response[Union[Any, JobExecutionTaskList]]
     """
 
     kwargs = _get_kwargs(
+        job_id=job_id,
+        execution_id=execution_id,
         cursor=cursor,
         limit=limit,
         sort=sort,
@@ -188,24 +215,27 @@ async def asyncio_detailed(
 
 
 async def asyncio(
+    job_id: str,
+    execution_id: str,
     *,
     client: Client,
     cursor: Union[Unset, str] = UNSET,
     limit: Union[Unset, int] = 50,
-    sort: Union[Unset, ListDrivesSort] = UNSET,
+    sort: Union[Unset, ListJobExecutionTasksSort] = UNSET,
     q: Union[Unset, str] = UNSET,
-) -> Union[Any, DriveList] | None:
-    """List drives
+) -> Union[Any, JobExecutionTaskList] | None:
+    """List execution tasks
 
-     Returns all drives in the workspace. Drives provide persistent storage that can be attached to
-    agents, functions, and sandboxes. Starting with API version 2026-04-28, the response wraps items in
-    `{data, meta}` and supports cursor pagination via the `cursor` and `limit` query parameters; older
-    versions keep returning a bare array with all drives.
+     Returns one cursor-paginated page of an execution's tasks. Tasks are derived from event history each
+    request; only the in-memory slicing is paginated, the events scan still fetches the whole event log
+    behind the scenes. Available starting with API version 2026-04-28.
 
     Args:
+        job_id (str):
+        execution_id (str):
         cursor (Union[Unset, str]):
         limit (Union[Unset, int]):  Default: 50.
-        sort (Union[Unset, ListDrivesSort]):
+        sort (Union[Unset, ListJobExecutionTasksSort]):
         q (Union[Unset, str]):
 
     Raises:
@@ -213,11 +243,13 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, DriveList]
+        Union[Any, JobExecutionTaskList]
     """
 
     return (
         await asyncio_detailed(
+            job_id=job_id,
+            execution_id=execution_id,
             client=client,
             cursor=cursor,
             limit=limit,
