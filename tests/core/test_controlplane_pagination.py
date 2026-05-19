@@ -8,8 +8,12 @@ from blaxel.core.client.models.job_execution import JobExecution
 from blaxel.core.client.models.job_execution_list import JobExecutionList
 from blaxel.core.client.models.job_execution_metadata import JobExecutionMetadata
 from blaxel.core.client.models.job_execution_spec import JobExecutionSpec
+from blaxel.core.client.models.lite_volume import LiteVolume
+from blaxel.core.client.models.lite_volume_metadata import LiteVolumeMetadata
+from blaxel.core.client.models.lite_volume_spec import LiteVolumeSpec
 from blaxel.core.client.models.pagination_meta import PaginationMeta
 from blaxel.core.client.models.sandbox_list import SandboxList
+from blaxel.core.client.models.volume_list import VolumeList
 from blaxel.core.client.types import UNSET
 from blaxel.core.drive.drive import SyncDriveInstance
 from blaxel.core.jobs import bl_job
@@ -75,6 +79,47 @@ def test_drive_list_returns_page_with_next_page(monkeypatch):
     assert [drive.name for drive in next_page.data] == ["drive-b"]
     assert next_page.has_more is False
     assert calls == [(UNSET, 1), ("cursor-2", 1)]
+
+
+def test_generated_list_models_accept_legacy_array_responses():
+    sandbox_page = SandboxList.from_dict(
+        [Sandbox(metadata=Metadata(name="sandbox-a"), spec=SandboxSpec()).to_dict()]
+    )
+    drive_page = DriveList.from_dict(
+        [Drive(metadata=Metadata(name="drive-a"), spec=DriveSpec()).to_dict()]
+    )
+    volume_page = VolumeList.from_dict(
+        [
+            LiteVolume(
+                metadata=LiteVolumeMetadata(name="volume-a"),
+                spec=LiteVolumeSpec(size=10),
+            ).to_dict()
+        ]
+    )
+    execution_page = JobExecutionList.from_dict(
+        [
+            JobExecution(
+                metadata=JobExecutionMetadata(id="execution-a"),
+                spec=JobExecutionSpec(),
+            ).to_dict()
+        ]
+    )
+
+    assert sandbox_page is not None
+    assert sandbox_page.meta is UNSET
+    assert [sandbox.metadata.name for sandbox in sandbox_page.data] == ["sandbox-a"]
+
+    assert drive_page is not None
+    assert drive_page.meta is UNSET
+    assert [drive.metadata.name for drive in drive_page.data] == ["drive-a"]
+
+    assert volume_page is not None
+    assert volume_page.meta is UNSET
+    assert [volume.metadata.name for volume in volume_page.data] == ["volume-a"]
+
+    assert execution_page is not None
+    assert execution_page.meta is UNSET
+    assert [execution.metadata.id for execution in execution_page.data] == ["execution-a"]
 
 
 def test_job_execution_list_supports_explicit_next_page(monkeypatch):

@@ -9,6 +9,18 @@ RawPage = TypeVar("RawPage")
 DEFAULT_PAGE_LIMIT = 50
 
 
+def split_list_response(src: Any) -> tuple[list[Any], Any, dict[str, Any]]:
+    if not src:
+        return [], UNSET, {}
+    if isinstance(src, list):
+        return src, UNSET, {}
+
+    data = src.copy()
+    items = data.pop("data", UNSET)
+    meta = data.pop("meta", UNSET)
+    return list(items or []), meta, data
+
+
 def get_page_data(page: Any) -> list[Any]:
     if page is None:
         return []
