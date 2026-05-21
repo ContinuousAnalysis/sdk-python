@@ -315,9 +315,13 @@ class SyncSandboxFileSystem(SyncSandboxAction):
                 for i in range(0, num_parts, MAX_PARALLEL_UPLOADS):
                     threads = []
                     results: Dict[int, Dict[str, Any]] = {}
+                    exceptions: List[Exception] = []
 
                     def make_upload(part_number: int, chunk: bytes):
-                        results[part_number] = self._upload_part(upload_id, part_number, chunk)
+                        try:
+                            results[part_number] = self._upload_part(upload_id, part_number, chunk)
+                        except Exception as e:
+                            exceptions.append(e)
 
                     for j in range(MAX_PARALLEL_UPLOADS):
                         if i + j >= num_parts:
@@ -331,6 +335,8 @@ class SyncSandboxFileSystem(SyncSandboxAction):
                         t.start()
                     for t in threads:
                         t.join()
+                    if exceptions:
+                        raise exceptions[0]
                     for part_number, r in results.items():
                         parts.append({"partNumber": part_number, "etag": r.get("etag")})
             finally:
