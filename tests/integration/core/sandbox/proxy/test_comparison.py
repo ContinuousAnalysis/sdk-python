@@ -42,33 +42,37 @@ class TestProxyComparison:
         request.cls.no_proxy_name = unique_name("cmp-noproxy")
 
         proxy_sb, no_proxy_sb = await asyncio.gather(
-            SandboxInstance.create({
-                "name": request.cls.proxy_name,
-                "image": default_image,
-                "region": default_region,
-                "labels": default_labels,
-                "network": {
-                    "proxy": {
-                        "routing": [
-                            {
-                                "destinations": ["httpbin.org"],
-                                "headers": {
-                                    "X-Proxy-Compare": "with-proxy",
-                                    "X-Api-Key": "{{SECRET:cmp-key}}",
+            SandboxInstance.create(
+                {
+                    "name": request.cls.proxy_name,
+                    "image": default_image,
+                    "region": default_region,
+                    "labels": default_labels,
+                    "network": {
+                        "proxy": {
+                            "routing": [
+                                {
+                                    "destinations": ["httpbin.org"],
+                                    "headers": {
+                                        "X-Proxy-Compare": "with-proxy",
+                                        "X-Api-Key": "{{SECRET:cmp-key}}",
+                                    },
+                                    "body": {"injected_field": "proxy-injected"},
+                                    "secrets": {"cmp-key": "comparison-secret-123"},
                                 },
-                                "body": {"injected_field": "proxy-injected"},
-                                "secrets": {"cmp-key": "comparison-secret-123"},
-                            },
-                        ],
+                            ],
+                        },
                     },
-                },
-            }),
-            SandboxInstance.create({
-                "name": request.cls.no_proxy_name,
-                "image": default_image,
-                "region": default_region,
-                "labels": default_labels,
-            }),
+                }
+            ),
+            SandboxInstance.create(
+                {
+                    "name": request.cls.no_proxy_name,
+                    "image": default_image,
+                    "region": default_region,
+                    "labels": default_labels,
+                }
+            ),
         )
         request.cls.proxy_sandbox = proxy_sb
         request.cls.no_proxy_sandbox = no_proxy_sb
@@ -80,10 +84,12 @@ class TestProxyComparison:
 
         # Warm up the proxy path: the proxy config may take a moment to propagate.
         for _ in range(10):
-            warmup = await proxy_sb.process.exec({
-                "command": "node /tmp/proxy-test.js GET https://httpbin.org/headers",
-                "wait_for_completion": True,
-            })
+            warmup = await proxy_sb.process.exec(
+                {
+                    "command": "node /tmp/proxy-test.js GET https://httpbin.org/headers",
+                    "wait_for_completion": True,
+                }
+            )
             if warmup.exit_code == 0:
                 try:
                     hdr = lowercase_keys(parse_json_output(warmup.logs)["headers"])
@@ -200,8 +206,12 @@ class TestProxyComparison:
         no_proxy_times: list[int] = []
         for _ in range(iterations):
             p, np = await asyncio.gather(
-                _timed_exec(self.proxy_sandbox, "node /tmp/proxy-test.js GET https://httpbin.org/get"),
-                _timed_exec(self.no_proxy_sandbox, "node /tmp/proxy-test.js GET https://httpbin.org/get"),
+                _timed_exec(
+                    self.proxy_sandbox, "node /tmp/proxy-test.js GET https://httpbin.org/get"
+                ),
+                _timed_exec(
+                    self.no_proxy_sandbox, "node /tmp/proxy-test.js GET https://httpbin.org/get"
+                ),
             )
             assert p["exit_code"] == 0
             assert np["exit_code"] == 0
@@ -214,14 +224,10 @@ class TestProxyComparison:
         overhead_pct = (overhead_ms / no_proxy_avg * 100) if no_proxy_avg > 0 else 0.0
 
         print(
-            f"[latency benchmark] proxy avg: {proxy_avg:.0f}ms, "
-            f"no-proxy avg: {no_proxy_avg:.0f}ms"
+            f"[latency benchmark] proxy avg: {proxy_avg:.0f}ms, no-proxy avg: {no_proxy_avg:.0f}ms"
         )
+        print(f"[latency benchmark] overhead: {overhead_ms:.0f}ms ({overhead_pct:.1f}%)")
         print(
-            f"[latency benchmark] overhead: {overhead_ms:.0f}ms ({overhead_pct:.1f}%)"
-        )
-        print(
-            f"[latency benchmark] proxy samples: {proxy_times}, "
-            f"no-proxy samples: {no_proxy_times}"
+            f"[latency benchmark] proxy samples: {proxy_times}, no-proxy samples: {no_proxy_times}"
         )
         assert overhead_ms < 5000
