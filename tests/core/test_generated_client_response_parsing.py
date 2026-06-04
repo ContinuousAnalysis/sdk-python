@@ -1,11 +1,17 @@
+from http import HTTPStatus
+from types import SimpleNamespace
+
 import httpx
 import pytest
 
+import blaxel.core.jobs as job_module
 from blaxel.core.client import errors
 from blaxel.core.client.api.compute import create_sandbox, list_sandboxes
 from blaxel.core.client.client import Client
+from blaxel.core.client.models.job_execution_list import JobExecutionList
 from blaxel.core.client.models.sandbox_error import SandboxError
 from blaxel.core.client.models.sandbox_list import SandboxList
+from blaxel.core.jobs import BlJob
 from blaxel.core.sandbox.default import sandbox as sandbox_module
 
 
@@ -132,3 +138,46 @@ async def test_sandbox_instance_list_unwraps_paginated_response(monkeypatch):
 
     assert len(sandboxes) == 1
     assert sandboxes[0].metadata.name == "wrapped-list-shape"
+
+
+def test_job_list_executions_unwraps_paginated_response(monkeypatch):
+    def fake_list_job_executions(*, job_id, client, limit, offset):
+        assert job_id == "mk3"
+        assert limit == 20
+        assert offset == 0
+        return SimpleNamespace(
+            status_code=HTTPStatus.OK,
+            parsed=JobExecutionList.from_dict({"data": []}),
+        )
+
+    monkeypatch.setattr(
+        job_module.list_job_executions,
+        "sync_detailed",
+        fake_list_job_executions,
+    )
+
+    executions = BlJob("mk3").list_executions()
+
+    assert executions == []
+
+
+@pytest.mark.asyncio
+async def test_job_alist_executions_unwraps_paginated_response(monkeypatch):
+    async def fake_list_job_executions(*, job_id, client, limit, offset):
+        assert job_id == "mk3"
+        assert limit == 20
+        assert offset == 0
+        return SimpleNamespace(
+            status_code=HTTPStatus.OK,
+            parsed=JobExecutionList.from_dict({"data": []}),
+        )
+
+    monkeypatch.setattr(
+        job_module.list_job_executions,
+        "asyncio_detailed",
+        fake_list_job_executions,
+    )
+
+    executions = await BlJob("mk3").alist_executions()
+
+    assert executions == []

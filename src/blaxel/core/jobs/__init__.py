@@ -18,6 +18,18 @@ from ..client.models.create_job_execution_request import (
     CreateJobExecutionRequest,
 )
 from ..client.models.job_execution import JobExecution
+from ..client.types import UNSET
+
+
+def _list_response_items(response):
+    if response is None:
+        return []
+
+    data = getattr(response, "data", response)
+    if data is UNSET or data is None:
+        return []
+
+    return data
 
 
 class BlJobWrapper:
@@ -308,7 +320,7 @@ class BlJob:
         if response.status_code != 200:
             raise Exception(f"Failed to list job executions: {response.status_code}")
 
-        return response.parsed or []
+        return _list_response_items(response.parsed)
 
     async def alist_executions(self, limit: int = 20, offset: int = 0) -> List[JobExecution]:
         """
@@ -333,7 +345,7 @@ class BlJob:
         if response.status_code != 200:
             raise Exception(f"Failed to list job executions: {response.status_code}")
 
-        return response.parsed or []
+        return _list_response_items(response.parsed)
 
     def get_execution_status(self, execution_id: str) -> str:
         """
