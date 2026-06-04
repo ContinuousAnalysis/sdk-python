@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any, Union, cast
 
 import httpx
 
@@ -50,7 +50,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> PolicyList | None:
+def _parse_response(
+    *, client: Client, response: httpx.Response
+) -> Union[list[Any], PolicyList] | None:
     if response.status_code == 200:
         try:
             _response_content = response.json()
@@ -64,6 +66,12 @@ def _parse_response(*, client: Client, response: httpx.Response) -> PolicyList |
             return None
         response_200 = PolicyList.from_dict(_response_content)
 
+        if isinstance(_response_content, list):
+            if response_200 is None:
+                return []
+            if response_200.data is UNSET or response_200.data is None:
+                return []
+            return cast(list[Any], response_200.data)
         return response_200
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
@@ -71,7 +79,9 @@ def _parse_response(*, client: Client, response: httpx.Response) -> PolicyList |
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[PolicyList]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[Union[list[Any], PolicyList]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -88,7 +98,7 @@ def sync_detailed(
     sort: Union[Unset, ListPoliciesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListPoliciesAnchor] = UNSET,
-) -> Response[PolicyList]:
+) -> Response[Union[list[Any], PolicyList]]:
     """List governance policies
 
      Returns governance policies in the workspace. Policies control deployment locations, hardware
@@ -109,7 +119,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[PolicyList]
+        Response[Union[list[Any], PolicyList]]
     """
 
     kwargs = _get_kwargs(
@@ -135,7 +145,7 @@ def sync(
     sort: Union[Unset, ListPoliciesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListPoliciesAnchor] = UNSET,
-) -> PolicyList | None:
+) -> Union[list[Any], PolicyList] | None:
     """List governance policies
 
      Returns governance policies in the workspace. Policies control deployment locations, hardware
@@ -156,7 +166,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        PolicyList
+        Union[list[Any], PolicyList]
     """
 
     return sync_detailed(
@@ -177,7 +187,7 @@ async def asyncio_detailed(
     sort: Union[Unset, ListPoliciesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListPoliciesAnchor] = UNSET,
-) -> Response[PolicyList]:
+) -> Response[Union[list[Any], PolicyList]]:
     """List governance policies
 
      Returns governance policies in the workspace. Policies control deployment locations, hardware
@@ -198,7 +208,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[PolicyList]
+        Response[Union[list[Any], PolicyList]]
     """
 
     kwargs = _get_kwargs(
@@ -222,7 +232,7 @@ async def asyncio(
     sort: Union[Unset, ListPoliciesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListPoliciesAnchor] = UNSET,
-) -> PolicyList | None:
+) -> Union[list[Any], PolicyList] | None:
     """List governance policies
 
      Returns governance policies in the workspace. Policies control deployment locations, hardware
@@ -243,7 +253,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        PolicyList
+        Union[list[Any], PolicyList]
     """
 
     return (

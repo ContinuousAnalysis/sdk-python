@@ -50,7 +50,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, DriveList] | None:
+def _parse_response(
+    *, client: Client, response: httpx.Response
+) -> Union[list[Any], Any, DriveList] | None:
     if response.status_code == 200:
         try:
             _response_content = response.json()
@@ -64,6 +66,12 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, D
             return None
         response_200 = DriveList.from_dict(_response_content)
 
+        if isinstance(_response_content, list):
+            if response_200 is None:
+                return []
+            if response_200.data is UNSET or response_200.data is None:
+                return []
+            return cast(list[Any], response_200.data)
         return response_200
     if response.status_code == 401:
         response_401 = cast(Any, None)
@@ -74,7 +82,9 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Any, D
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Union[Any, DriveList]]:
+def _build_response(
+    *, client: Client, response: httpx.Response
+) -> Response[Union[list[Any], Any, DriveList]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -91,7 +101,7 @@ def sync_detailed(
     sort: Union[Unset, ListDrivesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListDrivesAnchor] = UNSET,
-) -> Response[Union[Any, DriveList]]:
+) -> Response[Union[list[Any], Any, DriveList]]:
     """List drives
 
      Returns all drives in the workspace. Drives provide persistent storage that can be attached to
@@ -112,7 +122,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, DriveList]]
+        Response[Union[list[Any], Any, DriveList]]
     """
 
     kwargs = _get_kwargs(
@@ -138,7 +148,7 @@ def sync(
     sort: Union[Unset, ListDrivesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListDrivesAnchor] = UNSET,
-) -> Union[Any, DriveList] | None:
+) -> Union[list[Any], Any, DriveList] | None:
     """List drives
 
      Returns all drives in the workspace. Drives provide persistent storage that can be attached to
@@ -159,7 +169,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, DriveList]
+        Union[list[Any], Any, DriveList]
     """
 
     return sync_detailed(
@@ -180,7 +190,7 @@ async def asyncio_detailed(
     sort: Union[Unset, ListDrivesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListDrivesAnchor] = UNSET,
-) -> Response[Union[Any, DriveList]]:
+) -> Response[Union[list[Any], Any, DriveList]]:
     """List drives
 
      Returns all drives in the workspace. Drives provide persistent storage that can be attached to
@@ -201,7 +211,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, DriveList]]
+        Response[Union[list[Any], Any, DriveList]]
     """
 
     kwargs = _get_kwargs(
@@ -225,7 +235,7 @@ async def asyncio(
     sort: Union[Unset, ListDrivesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListDrivesAnchor] = UNSET,
-) -> Union[Any, DriveList] | None:
+) -> Union[list[Any], Any, DriveList] | None:
     """List drives
 
      Returns all drives in the workspace. Drives provide persistent storage that can be attached to
@@ -246,7 +256,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, DriveList]
+        Union[list[Any], Any, DriveList]
     """
 
     return (

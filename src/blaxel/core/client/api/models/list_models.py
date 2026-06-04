@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any, Union, cast
 
 import httpx
 
@@ -51,7 +51,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error, ModelList] | None:
+def _parse_response(
+    *, client: Client, response: httpx.Response
+) -> Union[list[Any], Error, ModelList] | None:
     if response.status_code == 200:
         try:
             _response_content = response.json()
@@ -65,6 +67,12 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error,
             return None
         response_200 = ModelList.from_dict(_response_content)
 
+        if isinstance(_response_content, list):
+            if response_200 is None:
+                return []
+            if response_200.data is UNSET or response_200.data is None:
+                return []
+            return cast(list[Any], response_200.data)
         return response_200
     if response.status_code == 401:
         try:
@@ -116,7 +124,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error,
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Error, ModelList]]:
+) -> Response[Union[list[Any], Error, ModelList]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -133,7 +141,7 @@ def sync_detailed(
     sort: Union[Unset, ListModelsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListModelsAnchor] = UNSET,
-) -> Response[Union[Error, ModelList]]:
+) -> Response[Union[list[Any], Error, ModelList]]:
     """List model endpoints
 
      Returns model gateway endpoints configured in the workspace. Each model represents a proxy to an
@@ -154,7 +162,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, ModelList]]
+        Response[Union[list[Any], Error, ModelList]]
     """
 
     kwargs = _get_kwargs(
@@ -180,7 +188,7 @@ def sync(
     sort: Union[Unset, ListModelsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListModelsAnchor] = UNSET,
-) -> Union[Error, ModelList] | None:
+) -> Union[list[Any], Error, ModelList] | None:
     """List model endpoints
 
      Returns model gateway endpoints configured in the workspace. Each model represents a proxy to an
@@ -201,7 +209,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, ModelList]
+        Union[list[Any], Error, ModelList]
     """
 
     return sync_detailed(
@@ -222,7 +230,7 @@ async def asyncio_detailed(
     sort: Union[Unset, ListModelsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListModelsAnchor] = UNSET,
-) -> Response[Union[Error, ModelList]]:
+) -> Response[Union[list[Any], Error, ModelList]]:
     """List model endpoints
 
      Returns model gateway endpoints configured in the workspace. Each model represents a proxy to an
@@ -243,7 +251,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, ModelList]]
+        Response[Union[list[Any], Error, ModelList]]
     """
 
     kwargs = _get_kwargs(
@@ -267,7 +275,7 @@ async def asyncio(
     sort: Union[Unset, ListModelsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListModelsAnchor] = UNSET,
-) -> Union[Error, ModelList] | None:
+) -> Union[list[Any], Error, ModelList] | None:
     """List model endpoints
 
      Returns model gateway endpoints configured in the workspace. Each model represents a proxy to an
@@ -288,7 +296,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, ModelList]
+        Union[list[Any], Error, ModelList]
     """
 
     return (

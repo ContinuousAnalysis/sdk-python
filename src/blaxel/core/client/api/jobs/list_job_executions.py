@@ -48,7 +48,7 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Any, JobExecutionList] | None:
+) -> Union[list[Any], Any, JobExecutionList] | None:
     if response.status_code == 200:
         try:
             _response_content = response.json()
@@ -62,6 +62,12 @@ def _parse_response(
             return None
         response_200 = JobExecutionList.from_dict(_response_content)
 
+        if isinstance(_response_content, list):
+            if response_200 is None:
+                return []
+            if response_200.data is UNSET or response_200.data is None:
+                return []
+            return cast(list[Any], response_200.data)
         return response_200
     if response.status_code == 400:
         response_400 = cast(Any, None)
@@ -77,7 +83,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Any, JobExecutionList]]:
+) -> Response[Union[list[Any], Any, JobExecutionList]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -95,7 +101,7 @@ def sync_detailed(
     cursor: Union[Unset, str] = UNSET,
     sort: Union[Unset, ListJobExecutionsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
-) -> Response[Union[Any, JobExecutionList]]:
+) -> Response[Union[list[Any], Any, JobExecutionList]]:
     """List job executions
 
      Returns executions for a batch job. Starting with API version 2026-04-28 the response is wrapped in
@@ -116,7 +122,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, JobExecutionList]]
+        Response[Union[list[Any], Any, JobExecutionList]]
     """
 
     kwargs = _get_kwargs(
@@ -144,7 +150,7 @@ def sync(
     cursor: Union[Unset, str] = UNSET,
     sort: Union[Unset, ListJobExecutionsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
-) -> Union[Any, JobExecutionList] | None:
+) -> Union[list[Any], Any, JobExecutionList] | None:
     """List job executions
 
      Returns executions for a batch job. Starting with API version 2026-04-28 the response is wrapped in
@@ -165,7 +171,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, JobExecutionList]
+        Union[list[Any], Any, JobExecutionList]
     """
 
     return sync_detailed(
@@ -188,7 +194,7 @@ async def asyncio_detailed(
     cursor: Union[Unset, str] = UNSET,
     sort: Union[Unset, ListJobExecutionsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
-) -> Response[Union[Any, JobExecutionList]]:
+) -> Response[Union[list[Any], Any, JobExecutionList]]:
     """List job executions
 
      Returns executions for a batch job. Starting with API version 2026-04-28 the response is wrapped in
@@ -209,7 +215,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, JobExecutionList]]
+        Response[Union[list[Any], Any, JobExecutionList]]
     """
 
     kwargs = _get_kwargs(
@@ -235,7 +241,7 @@ async def asyncio(
     cursor: Union[Unset, str] = UNSET,
     sort: Union[Unset, ListJobExecutionsSort] = UNSET,
     q: Union[Unset, str] = UNSET,
-) -> Union[Any, JobExecutionList] | None:
+) -> Union[list[Any], Any, JobExecutionList] | None:
     """List job executions
 
      Returns executions for a batch job. Starting with API version 2026-04-28 the response is wrapped in
@@ -256,7 +262,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, JobExecutionList]
+        Union[list[Any], Any, JobExecutionList]
     """
 
     return (

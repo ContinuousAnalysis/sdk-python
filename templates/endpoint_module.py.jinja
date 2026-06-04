@@ -15,6 +15,20 @@ from ... import errors
     arguments, client, kwargs, parse_response, docstring, body_to_kwarg %}
 
 {% set return_string = endpoint.response_type() %}
+{% set returns_legacy_bare_list = namespace(value=false) %}
+{% for response in endpoint.responses %}
+{% if response.prop.get_type_string().endswith("List") %}
+{% set returns_legacy_bare_list.value = true %}
+{% endif %}
+{% endfor %}
+{% if returns_legacy_bare_list.value %}
+{% set legacy_bare_list_return_string = "list[Any]" %}
+{% if return_string.startswith("Union[") %}
+{% set return_string = "Union[" + legacy_bare_list_return_string + ", " + return_string[6:-1] + "]" %}
+{% else %}
+{% set return_string = "Union[" + legacy_bare_list_return_string + ", " + return_string + "]" %}
+{% endif %}
+{% endif %}
 {% set parsed_responses = (endpoint.responses | length > 0) and return_string != "Any" %}
 
 def _get_kwargs(
@@ -88,6 +102,14 @@ def _parse_response(*, client: Client, response: httpx.Response) -> {{ return_st
         {% endif %}
         {% if prop_template.construct %}
         {{ prop_template.construct(response.prop, response_source) | indent(8) }}
+        {% if response.prop.get_type_string().endswith("List") and response_source == "_response_content" %}
+        if isinstance(_response_content, list):
+            if {{ response.prop.python_name }} is None:
+                return []
+            if {{ response.prop.python_name }}.data is UNSET or {{ response.prop.python_name }}.data is None:
+                return []
+            return cast(list[Any], {{ response.prop.python_name }}.data)
+        {% endif %}
         {% elif response.source.return_type == response.prop.get_type_string()  %}
         {{ response.prop.python_name }} = {{ response_source }}
         {% else %}

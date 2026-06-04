@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any, Union, cast
 
 import httpx
 
@@ -51,7 +51,9 @@ def _get_kwargs(
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error, VolumeList] | None:
+def _parse_response(
+    *, client: Client, response: httpx.Response
+) -> Union[list[Any], Error, VolumeList] | None:
     if response.status_code == 200:
         try:
             _response_content = response.json()
@@ -65,6 +67,12 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error,
             return None
         response_200 = VolumeList.from_dict(_response_content)
 
+        if isinstance(_response_content, list):
+            if response_200 is None:
+                return []
+            if response_200.data is UNSET or response_200.data is None:
+                return []
+            return cast(list[Any], response_200.data)
         return response_200
     if response.status_code == 401:
         try:
@@ -116,7 +124,7 @@ def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error,
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Error, VolumeList]]:
+) -> Response[Union[list[Any], Error, VolumeList]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -133,7 +141,7 @@ def sync_detailed(
     sort: Union[Unset, ListVolumesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListVolumesAnchor] = UNSET,
-) -> Response[Union[Error, VolumeList]]:
+) -> Response[Union[list[Any], Error, VolumeList]]:
     """List persistent volumes
 
      Returns persistent storage volumes in the workspace. Volumes can be attached to sandboxes for
@@ -154,7 +162,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, VolumeList]]
+        Response[Union[list[Any], Error, VolumeList]]
     """
 
     kwargs = _get_kwargs(
@@ -180,7 +188,7 @@ def sync(
     sort: Union[Unset, ListVolumesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListVolumesAnchor] = UNSET,
-) -> Union[Error, VolumeList] | None:
+) -> Union[list[Any], Error, VolumeList] | None:
     """List persistent volumes
 
      Returns persistent storage volumes in the workspace. Volumes can be attached to sandboxes for
@@ -201,7 +209,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, VolumeList]
+        Union[list[Any], Error, VolumeList]
     """
 
     return sync_detailed(
@@ -222,7 +230,7 @@ async def asyncio_detailed(
     sort: Union[Unset, ListVolumesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListVolumesAnchor] = UNSET,
-) -> Response[Union[Error, VolumeList]]:
+) -> Response[Union[list[Any], Error, VolumeList]]:
     """List persistent volumes
 
      Returns persistent storage volumes in the workspace. Volumes can be attached to sandboxes for
@@ -243,7 +251,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, VolumeList]]
+        Response[Union[list[Any], Error, VolumeList]]
     """
 
     kwargs = _get_kwargs(
@@ -267,7 +275,7 @@ async def asyncio(
     sort: Union[Unset, ListVolumesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListVolumesAnchor] = UNSET,
-) -> Union[Error, VolumeList] | None:
+) -> Union[list[Any], Error, VolumeList] | None:
     """List persistent volumes
 
      Returns persistent storage volumes in the workspace. Volumes can be attached to sandboxes for
@@ -288,7 +296,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, VolumeList]
+        Union[list[Any], Error, VolumeList]
     """
 
     return (

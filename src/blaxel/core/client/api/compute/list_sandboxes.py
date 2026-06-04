@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Any, Union
+from typing import Any, Union, cast
 
 import httpx
 
@@ -56,7 +56,7 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Error, SandboxList] | None:
+) -> Union[list[Any], Error, SandboxList] | None:
     if response.status_code == 200:
         try:
             _response_content = response.json()
@@ -70,6 +70,12 @@ def _parse_response(
             return None
         response_200 = SandboxList.from_dict(_response_content)
 
+        if isinstance(_response_content, list):
+            if response_200 is None:
+                return []
+            if response_200.data is UNSET or response_200.data is None:
+                return []
+            return cast(list[Any], response_200.data)
         return response_200
     if response.status_code == 401:
         try:
@@ -121,7 +127,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Error, SandboxList]]:
+) -> Response[Union[list[Any], Error, SandboxList]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -139,7 +145,7 @@ def sync_detailed(
     sort: Union[Unset, ListSandboxesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
-) -> Response[Union[Error, SandboxList]]:
+) -> Response[Union[list[Any], Error, SandboxList]]:
     """List sandboxes
 
      Returns sandboxes in the workspace. Each sandbox includes its configuration, status, and endpoint
@@ -162,7 +168,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, SandboxList]]
+        Response[Union[list[Any], Error, SandboxList]]
     """
 
     kwargs = _get_kwargs(
@@ -190,7 +196,7 @@ def sync(
     sort: Union[Unset, ListSandboxesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
-) -> Union[Error, SandboxList] | None:
+) -> Union[list[Any], Error, SandboxList] | None:
     """List sandboxes
 
      Returns sandboxes in the workspace. Each sandbox includes its configuration, status, and endpoint
@@ -213,7 +219,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, SandboxList]
+        Union[list[Any], Error, SandboxList]
     """
 
     return sync_detailed(
@@ -236,7 +242,7 @@ async def asyncio_detailed(
     sort: Union[Unset, ListSandboxesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
-) -> Response[Union[Error, SandboxList]]:
+) -> Response[Union[list[Any], Error, SandboxList]]:
     """List sandboxes
 
      Returns sandboxes in the workspace. Each sandbox includes its configuration, status, and endpoint
@@ -259,7 +265,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Error, SandboxList]]
+        Response[Union[list[Any], Error, SandboxList]]
     """
 
     kwargs = _get_kwargs(
@@ -285,7 +291,7 @@ async def asyncio(
     sort: Union[Unset, ListSandboxesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
     anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
-) -> Union[Error, SandboxList] | None:
+) -> Union[list[Any], Error, SandboxList] | None:
     """List sandboxes
 
      Returns sandboxes in the workspace. Each sandbox includes its configuration, status, and endpoint
@@ -308,7 +314,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Error, SandboxList]
+        Union[list[Any], Error, SandboxList]
     """
 
     return (

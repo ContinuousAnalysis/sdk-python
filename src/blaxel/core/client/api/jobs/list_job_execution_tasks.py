@@ -46,7 +46,7 @@ def _get_kwargs(
 
 def _parse_response(
     *, client: Client, response: httpx.Response
-) -> Union[Any, JobExecutionTaskList] | None:
+) -> Union[list[Any], Any, JobExecutionTaskList] | None:
     if response.status_code == 200:
         try:
             _response_content = response.json()
@@ -60,6 +60,12 @@ def _parse_response(
             return None
         response_200 = JobExecutionTaskList.from_dict(_response_content)
 
+        if isinstance(_response_content, list):
+            if response_200 is None:
+                return []
+            if response_200.data is UNSET or response_200.data is None:
+                return []
+            return cast(list[Any], response_200.data)
         return response_200
     if response.status_code == 400:
         response_400 = cast(Any, None)
@@ -78,7 +84,7 @@ def _parse_response(
 
 def _build_response(
     *, client: Client, response: httpx.Response
-) -> Response[Union[Any, JobExecutionTaskList]]:
+) -> Response[Union[list[Any], Any, JobExecutionTaskList]]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -96,7 +102,7 @@ def sync_detailed(
     limit: Union[Unset, int] = 50,
     sort: Union[Unset, ListJobExecutionTasksSort] = UNSET,
     q: Union[Unset, str] = UNSET,
-) -> Response[Union[Any, JobExecutionTaskList]]:
+) -> Response[Union[list[Any], Any, JobExecutionTaskList]]:
     """List execution tasks
 
      Returns one cursor-paginated page of an execution's tasks. Tasks are derived from event history each
@@ -117,7 +123,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, JobExecutionTaskList]]
+        Response[Union[list[Any], Any, JobExecutionTaskList]]
     """
 
     kwargs = _get_kwargs(
@@ -145,7 +151,7 @@ def sync(
     limit: Union[Unset, int] = 50,
     sort: Union[Unset, ListJobExecutionTasksSort] = UNSET,
     q: Union[Unset, str] = UNSET,
-) -> Union[Any, JobExecutionTaskList] | None:
+) -> Union[list[Any], Any, JobExecutionTaskList] | None:
     """List execution tasks
 
      Returns one cursor-paginated page of an execution's tasks. Tasks are derived from event history each
@@ -166,7 +172,7 @@ def sync(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, JobExecutionTaskList]
+        Union[list[Any], Any, JobExecutionTaskList]
     """
 
     return sync_detailed(
@@ -189,7 +195,7 @@ async def asyncio_detailed(
     limit: Union[Unset, int] = 50,
     sort: Union[Unset, ListJobExecutionTasksSort] = UNSET,
     q: Union[Unset, str] = UNSET,
-) -> Response[Union[Any, JobExecutionTaskList]]:
+) -> Response[Union[list[Any], Any, JobExecutionTaskList]]:
     """List execution tasks
 
      Returns one cursor-paginated page of an execution's tasks. Tasks are derived from event history each
@@ -210,7 +216,7 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Union[Any, JobExecutionTaskList]]
+        Response[Union[list[Any], Any, JobExecutionTaskList]]
     """
 
     kwargs = _get_kwargs(
@@ -236,7 +242,7 @@ async def asyncio(
     limit: Union[Unset, int] = 50,
     sort: Union[Unset, ListJobExecutionTasksSort] = UNSET,
     q: Union[Unset, str] = UNSET,
-) -> Union[Any, JobExecutionTaskList] | None:
+) -> Union[list[Any], Any, JobExecutionTaskList] | None:
     """List execution tasks
 
      Returns one cursor-paginated page of an execution's tasks. Tasks are derived from event history each
@@ -257,7 +263,7 @@ async def asyncio(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Union[Any, JobExecutionTaskList]
+        Union[list[Any], Any, JobExecutionTaskList]
     """
 
     return (
