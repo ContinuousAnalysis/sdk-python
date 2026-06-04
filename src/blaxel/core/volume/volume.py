@@ -30,6 +30,17 @@ class VolumeAPIError(Exception):
         self.code = code
 
 
+def _list_response_items(response):
+    if response is None:
+        return []
+
+    data = getattr(response, "data", response)
+    if data is UNSET or data is None:
+        return []
+
+    return data
+
+
 class _AsyncDeleteDescriptor:
     """Descriptor that provides both class-level and instance-level delete functionality."""
 
@@ -256,7 +267,11 @@ class VolumeInstance:
     @classmethod
     async def list(cls) -> list["VolumeInstance"]:
         response = await list_volumes(client=client)
-        return [cls(volume) for volume in response or []]
+        if isinstance(response, Error):
+            status_code = int(response.code) if response.code is not UNSET else None
+            message = response.message if response.message is not UNSET else response.error
+            raise VolumeAPIError(message, status_code=status_code, code=response.error)
+        return [cls(volume) for volume in _list_response_items(response)]
 
     @classmethod
     async def create_if_not_exists(
@@ -410,7 +425,11 @@ class SyncVolumeInstance:
     def list(cls) -> List["SyncVolumeInstance"]:
         """List all volumes synchronously."""
         response = list_volumes_sync(client=client)
-        return [cls(volume) for volume in response or []]
+        if isinstance(response, Error):
+            status_code = int(response.code) if response.code is not UNSET else None
+            message = response.message if response.message is not UNSET else response.error
+            raise VolumeAPIError(message, status_code=status_code, code=response.error)
+        return [cls(volume) for volume in _list_response_items(response)]
 
     @classmethod
     def create_if_not_exists(

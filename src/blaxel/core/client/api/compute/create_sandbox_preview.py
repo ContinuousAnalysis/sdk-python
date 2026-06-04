@@ -1,24 +1,32 @@
 from http import HTTPStatus
-from typing import Any
+from typing import Any, Union
 
 import httpx
 
 from ... import errors
 from ...client import Client
 from ...models.preview import Preview
-from ...types import Response
+from ...types import UNSET, Response, Unset
 
 
 def _get_kwargs(
     sandbox_name: str,
     *,
     body: Preview,
+    force: Union[Unset, bool] = UNSET,
 ) -> dict[str, Any]:
     headers: dict[str, Any] = {}
+
+    params: dict[str, Any] = {}
+
+    params["force"] = force
+
+    params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
     _kwargs: dict[str, Any] = {
         "method": "post",
         "url": f"/sandboxes/{sandbox_name}/previews",
+        "params": params,
     }
 
     if type(body) is dict:
@@ -35,7 +43,17 @@ def _get_kwargs(
 
 def _parse_response(*, client: Client, response: httpx.Response) -> Preview | None:
     if response.status_code == 200:
-        response_200 = Preview.from_dict(response.json())
+        try:
+            _response_content = response.json()
+        except ValueError as exc:
+            if client.raise_on_unexpected_status:
+                raise errors.ResponseParseError(
+                    response.status_code,
+                    response.content,
+                    response.headers.get("Content-Type"),
+                ) from exc
+            return None
+        response_200 = Preview.from_dict(_response_content)
 
         return response_200
     if client.raise_on_unexpected_status:
@@ -58,6 +76,7 @@ def sync_detailed(
     *,
     client: Client,
     body: Preview,
+    force: Union[Unset, bool] = UNSET,
 ) -> Response[Preview]:
     """Create Sandbox Preview
 
@@ -65,10 +84,12 @@ def sync_detailed(
 
     Args:
         sandbox_name (str):
+        force (Union[Unset, bool]):
         body (Preview): Preview of a Resource
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.ResponseParseError: If a documented response body cannot be parsed and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
@@ -78,6 +99,7 @@ def sync_detailed(
     kwargs = _get_kwargs(
         sandbox_name=sandbox_name,
         body=body,
+        force=force,
     )
 
     response = client.get_httpx_client().request(
@@ -92,6 +114,7 @@ def sync(
     *,
     client: Client,
     body: Preview,
+    force: Union[Unset, bool] = UNSET,
 ) -> Preview | None:
     """Create Sandbox Preview
 
@@ -99,10 +122,12 @@ def sync(
 
     Args:
         sandbox_name (str):
+        force (Union[Unset, bool]):
         body (Preview): Preview of a Resource
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.ResponseParseError: If a documented response body cannot be parsed and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
@@ -113,6 +138,7 @@ def sync(
         sandbox_name=sandbox_name,
         client=client,
         body=body,
+        force=force,
     ).parsed
 
 
@@ -121,6 +147,7 @@ async def asyncio_detailed(
     *,
     client: Client,
     body: Preview,
+    force: Union[Unset, bool] = UNSET,
 ) -> Response[Preview]:
     """Create Sandbox Preview
 
@@ -128,10 +155,12 @@ async def asyncio_detailed(
 
     Args:
         sandbox_name (str):
+        force (Union[Unset, bool]):
         body (Preview): Preview of a Resource
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.ResponseParseError: If a documented response body cannot be parsed and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
@@ -141,6 +170,7 @@ async def asyncio_detailed(
     kwargs = _get_kwargs(
         sandbox_name=sandbox_name,
         body=body,
+        force=force,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -153,6 +183,7 @@ async def asyncio(
     *,
     client: Client,
     body: Preview,
+    force: Union[Unset, bool] = UNSET,
 ) -> Preview | None:
     """Create Sandbox Preview
 
@@ -160,10 +191,12 @@ async def asyncio(
 
     Args:
         sandbox_name (str):
+        force (Union[Unset, bool]):
         body (Preview): Preview of a Resource
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.ResponseParseError: If a documented response body cannot be parsed and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
@@ -175,5 +208,6 @@ async def asyncio(
             sandbox_name=sandbox_name,
             client=client,
             body=body,
+            force=force,
         )
     ).parsed

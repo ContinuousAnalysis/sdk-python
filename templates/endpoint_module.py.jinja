@@ -72,12 +72,26 @@ def _parse_response(*, client: Client, response: httpx.Response) -> {{ return_st
     {% for response in endpoint.responses %}
     if response.status_code == {{ response.status_code.value }}:
         {% if parsed_responses %}{% import "property_templates/" + response.prop.template as prop_template %}
+        {% set response_source = response.source.attribute %}
+        {% if response_source == "response.json()" %}
+        try:
+            _response_content = response.json()
+        except ValueError as exc:
+            if client.raise_on_unexpected_status:
+                raise errors.ResponseParseError(
+                    response.status_code,
+                    response.content,
+                    response.headers.get("Content-Type"),
+                ) from exc
+            return None
+        {% set response_source = "_response_content" %}
+        {% endif %}
         {% if prop_template.construct %}
-        {{ prop_template.construct(response.prop, response.source.attribute) | indent(8) }}
+        {{ prop_template.construct(response.prop, response_source) | indent(8) }}
         {% elif response.source.return_type == response.prop.get_type_string()  %}
-        {{ response.prop.python_name }} = {{ response.source.attribute }}
+        {{ response.prop.python_name }} = {{ response_source }}
         {% else %}
-        {{ response.prop.python_name }} = cast({{ response.prop.get_type_string() }}, {{ response.source.attribute }})
+        {{ response.prop.python_name }} = cast({{ response.prop.get_type_string() }}, {{ response_source }})
         {% endif %}
         return {{ response.prop.python_name }}
         {% else %}

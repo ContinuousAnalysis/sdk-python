@@ -31,6 +31,17 @@ class DriveAPIError(Exception):
         self.code = code
 
 
+def _list_response_items(response):
+    if response is None:
+        return []
+
+    data = getattr(response, "data", response)
+    if data is UNSET or data is None:
+        return []
+
+    return data
+
+
 class _AsyncDeleteDescriptor:
     """Descriptor that provides both class-level and instance-level delete functionality."""
 
@@ -249,7 +260,11 @@ class DriveInstance:
     @classmethod
     async def list(cls) -> list["DriveInstance"]:
         response = await list_drives(client=client)
-        return [cls(drive) for drive in response or []]
+        if isinstance(response, Error):
+            status_code = int(response.code) if response.code is not UNSET else None
+            message = response.message if response.message is not UNSET else response.error
+            raise DriveAPIError(message, status_code=status_code, code=response.error)
+        return [cls(drive) for drive in _list_response_items(response)]
 
     @classmethod
     async def create_if_not_exists(
@@ -401,7 +416,11 @@ class SyncDriveInstance:
     def list(cls) -> List["SyncDriveInstance"]:
         """List all drives synchronously."""
         response = list_drives_sync(client=client)
-        return [cls(drive) for drive in response or []]
+        if isinstance(response, Error):
+            status_code = int(response.code) if response.code is not UNSET else None
+            message = response.message if response.message is not UNSET else response.error
+            raise DriveAPIError(message, status_code=status_code, code=response.error)
+        return [cls(drive) for drive in _list_response_items(response)]
 
     @classmethod
     def create_if_not_exists(

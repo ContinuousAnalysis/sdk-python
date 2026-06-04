@@ -26,6 +26,14 @@ if TYPE_CHECKING:
 
 {% set class_name = model.class_info.name %}
 {% set module_name = model.class_info.module_name %}
+{% set accepts_bare_data_array = namespace(value=false) %}
+{% if class_name.endswith("List") %}
+{% for property in model.required_properties + model.optional_properties %}
+{% if property.python_name == "data" %}
+{% set accepts_bare_data_array.value = true %}
+{% endif %}
+{% endfor %}
+{% endif %}
 
 {% from "helpers.jinja" import safe_docstring %}
 
@@ -129,14 +137,25 @@ return field_dict
 {% endif %}
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: dict[str, Any]{% if accepts_bare_data_array.value %} | list[Any]{% endif %}) -> T | None:
     {% for lazy_import in model.lazy_imports %}
         {{ lazy_import }}
     {% endfor %}
 {% if (model.required_properties or model.optional_properties or model.additional_properties) %}
+        {% if accepts_bare_data_array.value %}
+        if isinstance(src_dict, list):
+            d = {"data": src_dict}
+        elif src_dict is None:
+            return None
+        elif not src_dict:
+            d = {}
+        else:
+            d = src_dict.copy()
+        {% else %}
         if not src_dict:
             return None
         d = src_dict.copy()
+        {% endif %}
 {% for property in model.required_properties + model.optional_properties %}
     {% if property.required %}
         {% if property.name != property.python_name %}

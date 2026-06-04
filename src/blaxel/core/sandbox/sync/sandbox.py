@@ -31,6 +31,7 @@ from ..default.sandbox import (
     NON_REUSABLE_SANDBOX_STATUSES,
     SandboxAPIError,
     _is_sandbox_conflict,
+    _list_response_items,
     _sandbox_name,
 )
 from ..types import (
@@ -297,7 +298,11 @@ class SyncSandboxInstance:
     @classmethod
     def list(cls) -> List["SyncSandboxInstance"]:
         response = list_sandboxes(client=client)
-        return [cls(sandbox) for sandbox in response]
+        if isinstance(response, Error):
+            status_code = response.code if response.code is not UNSET else None
+            message = response.message if response.message is not UNSET else response.error
+            raise SandboxAPIError(message, status_code=status_code, code=response.error)
+        return [cls(sandbox) for sandbox in _list_response_items(response)]
 
     @classmethod
     def update_metadata(

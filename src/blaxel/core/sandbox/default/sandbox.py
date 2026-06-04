@@ -45,6 +45,17 @@ from .session import SandboxSessions
 from .system import SandboxSystem
 
 
+def _list_response_items(response):
+    if response is None:
+        return []
+
+    data = getattr(response, "data", response)
+    if data is UNSET or data is None:
+        return []
+
+    return data
+
+
 class SandboxAPIError(Exception):
     """Exception raised when sandbox API returns an error."""
 
@@ -357,7 +368,11 @@ class SandboxInstance:
     @classmethod
     async def list(cls) -> List["SandboxInstance"]:
         response = await list_sandboxes(client=client)
-        return [cls(sandbox) for sandbox in response]
+        if isinstance(response, Error):
+            status_code = response.code if response.code is not UNSET else None
+            message = response.message if response.message is not UNSET else response.error
+            raise SandboxAPIError(message, status_code=status_code, code=response.error)
+        return [cls(sandbox) for sandbox in _list_response_items(response)]
 
     @classmethod
     async def update_metadata(

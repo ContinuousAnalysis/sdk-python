@@ -167,6 +167,15 @@ Args:
 {% endif %}
 Raises:
     errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+{% set has_json_responses = namespace(value=false) %}
+{% for response in endpoint.responses %}
+{% if response.source.attribute == "response.json()" %}
+{% set has_json_responses.value = true %}
+{% endif %}
+{% endfor %}
+{% if has_json_responses.value %}
+    errors.ResponseParseError: If a documented response body cannot be parsed and Client.raise_on_unexpected_status is True.
+{% endif %}
     httpx.TimeoutException: If the request takes longer than Client.timeout.
 
 Returns:

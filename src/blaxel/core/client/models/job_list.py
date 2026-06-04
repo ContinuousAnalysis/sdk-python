@@ -56,13 +56,18 @@ class JobList:
         return field_dict
 
     @classmethod
-    def from_dict(cls: type[T], src_dict: dict[str, Any]) -> T | None:
+    def from_dict(cls: type[T], src_dict: dict[str, Any] | list[Any]) -> T | None:
         from ..models.job import Job
         from ..models.pagination_meta import PaginationMeta
 
-        if not src_dict:
+        if isinstance(src_dict, list):
+            d = {"data": src_dict}
+        elif src_dict is None:
             return None
-        d = src_dict.copy()
+        elif not src_dict:
+            d = {}
+        else:
+            d = src_dict.copy()
         data = []
         _data = d.pop("data", UNSET)
         for data_item_data in _data or []:

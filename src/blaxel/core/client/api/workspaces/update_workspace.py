@@ -36,27 +36,87 @@ def _get_kwargs(
 
 def _parse_response(*, client: Client, response: httpx.Response) -> Union[Error, Workspace] | None:
     if response.status_code == 200:
-        response_200 = Workspace.from_dict(response.json())
+        try:
+            _response_content = response.json()
+        except ValueError as exc:
+            if client.raise_on_unexpected_status:
+                raise errors.ResponseParseError(
+                    response.status_code,
+                    response.content,
+                    response.headers.get("Content-Type"),
+                ) from exc
+            return None
+        response_200 = Workspace.from_dict(_response_content)
 
         return response_200
     if response.status_code == 400:
-        response_400 = Error.from_dict(response.json())
+        try:
+            _response_content = response.json()
+        except ValueError as exc:
+            if client.raise_on_unexpected_status:
+                raise errors.ResponseParseError(
+                    response.status_code,
+                    response.content,
+                    response.headers.get("Content-Type"),
+                ) from exc
+            return None
+        response_400 = Error.from_dict(_response_content)
 
         return response_400
     if response.status_code == 401:
-        response_401 = Error.from_dict(response.json())
+        try:
+            _response_content = response.json()
+        except ValueError as exc:
+            if client.raise_on_unexpected_status:
+                raise errors.ResponseParseError(
+                    response.status_code,
+                    response.content,
+                    response.headers.get("Content-Type"),
+                ) from exc
+            return None
+        response_401 = Error.from_dict(_response_content)
 
         return response_401
     if response.status_code == 403:
-        response_403 = Error.from_dict(response.json())
+        try:
+            _response_content = response.json()
+        except ValueError as exc:
+            if client.raise_on_unexpected_status:
+                raise errors.ResponseParseError(
+                    response.status_code,
+                    response.content,
+                    response.headers.get("Content-Type"),
+                ) from exc
+            return None
+        response_403 = Error.from_dict(_response_content)
 
         return response_403
     if response.status_code == 404:
-        response_404 = Error.from_dict(response.json())
+        try:
+            _response_content = response.json()
+        except ValueError as exc:
+            if client.raise_on_unexpected_status:
+                raise errors.ResponseParseError(
+                    response.status_code,
+                    response.content,
+                    response.headers.get("Content-Type"),
+                ) from exc
+            return None
+        response_404 = Error.from_dict(_response_content)
 
         return response_404
     if response.status_code == 500:
-        response_500 = Error.from_dict(response.json())
+        try:
+            _response_content = response.json()
+        except ValueError as exc:
+            if client.raise_on_unexpected_status:
+                raise errors.ResponseParseError(
+                    response.status_code,
+                    response.content,
+                    response.headers.get("Content-Type"),
+                ) from exc
+            return None
+        response_500 = Error.from_dict(_response_content)
 
         return response_500
     if client.raise_on_unexpected_status:
@@ -94,6 +154,7 @@ def sync_detailed(
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.ResponseParseError: If a documented response body cannot be parsed and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
@@ -130,6 +191,7 @@ def sync(
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.ResponseParseError: If a documented response body cannot be parsed and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
@@ -161,6 +223,7 @@ async def asyncio_detailed(
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.ResponseParseError: If a documented response body cannot be parsed and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
@@ -195,6 +258,7 @@ async def asyncio(
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.ResponseParseError: If a documented response body cannot be parsed and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:

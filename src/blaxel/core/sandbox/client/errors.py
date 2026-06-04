@@ -13,4 +13,24 @@ class UnexpectedStatus(Exception):
         )
 
 
-__all__ = ["UnexpectedStatus"]
+class ResponseParseError(Exception):
+    """Raised by api functions when a documented response body cannot be parsed"""
+
+    def __init__(self, status_code: int, content: bytes, content_type: str | None = None):
+        self.status_code = status_code
+        self.content = content
+        self.content_type = content_type
+
+        preview = content[:500].decode(errors="replace")
+        if len(content) > 500:
+            preview = f"{preview}..."
+
+        content_type_text = content_type or "unknown content type"
+        super().__init__(
+            "Could not parse response body for documented status code "
+            f"{status_code} as JSON ({content_type_text}).\n\n"
+            f"Response content:\n{preview}"
+        )
+
+
+__all__ = ["ResponseParseError", "UnexpectedStatus"]

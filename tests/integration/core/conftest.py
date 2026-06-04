@@ -24,6 +24,24 @@ def pytest_sessionfinish(session, exitstatus):
 
         print("\n🧹 Cleaning up test resources...")
 
+        async def volume_labels(volume):
+            metadata = getattr(volume, "metadata", None)
+            labels = getattr(metadata, "labels", None) if metadata else None
+            if labels is not None:
+                return labels
+
+            name = getattr(volume, "name", None)
+            if not name:
+                return None
+
+            try:
+                full_volume = await VolumeInstance.get(name)
+            except Exception:
+                return None
+
+            metadata = getattr(full_volume, "metadata", None)
+            return getattr(metadata, "labels", None) if metadata else None
+
         # Clean up sandboxes with test labels
         try:
             sandboxes = await SandboxInstance.list()
@@ -44,7 +62,7 @@ def pytest_sessionfinish(session, exitstatus):
         try:
             volumes = await VolumeInstance.list()
             for vol in volumes:
-                labels = vol.metadata.labels if hasattr(vol, "metadata") and vol.metadata else None
+                labels = await volume_labels(vol)
                 # Labels are stored in additional_properties of MetadataLabels object
                 if labels is not None:
                     props = getattr(labels, "additional_properties", {}) or {}

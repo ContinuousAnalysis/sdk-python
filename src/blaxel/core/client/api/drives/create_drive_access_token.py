@@ -24,7 +24,17 @@ def _parse_response(
     *, client: Client, response: httpx.Response
 ) -> Union[Any, CreateDriveAccessTokenResponse200] | None:
     if response.status_code == 200:
-        response_200 = CreateDriveAccessTokenResponse200.from_dict(response.json())
+        try:
+            _response_content = response.json()
+        except ValueError as exc:
+            if client.raise_on_unexpected_status:
+                raise errors.ResponseParseError(
+                    response.status_code,
+                    response.content,
+                    response.headers.get("Content-Type"),
+                ) from exc
+            return None
+        response_200 = CreateDriveAccessTokenResponse200.from_dict(_response_content)
 
         return response_200
     if response.status_code == 401:
@@ -68,6 +78,7 @@ def sync_detailed(
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.ResponseParseError: If a documented response body cannot be parsed and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
@@ -100,6 +111,7 @@ def sync(
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.ResponseParseError: If a documented response body cannot be parsed and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
@@ -127,6 +139,7 @@ async def asyncio_detailed(
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.ResponseParseError: If a documented response body cannot be parsed and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
@@ -157,6 +170,7 @@ async def asyncio(
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        errors.ResponseParseError: If a documented response body cannot be parsed and Client.raise_on_unexpected_status is True.
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
