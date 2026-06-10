@@ -1,4 +1,6 @@
+import asyncio
 import logging
+import time
 import uuid
 import warnings
 from typing import TYPE_CHECKING, Any, Callable, Dict, List, Union
@@ -27,6 +29,7 @@ from ...client.models import (
 from ...client.models.error import Error
 from ...client.models.sandbox_error import SandboxError
 from ...client.types import UNSET
+from ...common.internal import list_response_items as _list_response_items
 from ...common.settings import settings
 from ..types import (
     SandboxConfiguration,
@@ -43,17 +46,6 @@ from .preview import SandboxPreviews
 from .process import SandboxProcess
 from .session import SandboxSessions
 from .system import SandboxSystem
-
-
-def _list_response_items(response):
-    if response is None:
-        return []
-
-    data = getattr(response, "data", response)
-    if data is UNSET or data is None:
-        return []
-
-    return data
 
 
 class SandboxAPIError(Exception):
@@ -75,9 +67,25 @@ NON_REUSABLE_SANDBOX_STATUSES = {
     "DEACTIVATING",
 }
 
+# Statuses that resolve on their own (a delete or deactivation in flight). The control
+# plane keeps answering 409 to creates while the record is in one of these, so retrying
+# instantly burns the whole attempt budget inside the window. Terminal statuses
+# (FAILED, TERMINATED) accept a create immediately and are not listed here.
+TRANSIENT_SANDBOX_STATUSES = {
+    "TERMINATING",
+    "DELETING",
+    "DEACTIVATING",
+}
+TRANSIENT_STATUS_MAX_WAIT_SECONDS = 30.0
+TRANSIENT_STATUS_POLL_SECONDS = 0.5
+
 
 def _is_sandbox_conflict(error: SandboxAPIError) -> bool:
     return error.status_code == 409 or error.code in {409, "409", "SANDBOX_ALREADY_EXISTS"}
+
+
+def _is_sandbox_not_found(error: SandboxAPIError) -> bool:
+    return error.status_code == 404 or error.code in {404, "404"}
 
 
 def _sandbox_name(
@@ -535,7 +543,9 @@ class SandboxInstance:
     ) -> "SandboxInstance":
         """Create a sandbox if it doesn't exist, otherwise return existing."""
         attempts = 3
-        for _ in range(attempts):
+        last_status = "unknown"
+        for attempt in range(attempts):
+            final_attempt = attempt == attempts - 1
             try:
                 return await cls.create(sandbox, create_if_not_exist=True)
             except SandboxAPIError as e:
@@ -546,11 +556,56 @@ class SandboxInstance:
                 if not name:
                     raise ValueError("Sandbox name is required")
 
-                sandbox_instance = await cls.get(name)
+                try:
+                    sandbox_instance = await cls.get(name)
+                except SandboxAPIError as get_error:
+                    if _is_sandbox_not_found(get_error):
+                        # The record vanished between the create conflict and this status
+                        # check (its deletion just finished); give the control plane a
+                        # beat and retry.
+                        last_status = "vanished"
+                        if not final_attempt:
+                            await asyncio.sleep(TRANSIENT_STATUS_POLL_SECONDS)
+                        continue
+                    raise
+
                 if str(sandbox_instance.status) not in NON_REUSABLE_SANDBOX_STATUSES:
                     return sandbox_instance
 
-        raise RuntimeError(f"Unable to create sandbox after {attempts} attempts.")
+                # A delete or deactivation in flight rejects creates until it finishes;
+                # wait it out instead of burning the remaining attempts inside the window.
+                # No point waiting after the last attempt: nothing will use the result.
+                last_status = str(sandbox_instance.status)
+                if last_status in TRANSIENT_SANDBOX_STATUSES and not final_attempt:
+                    await cls._wait_while_dying(name)
+
+        raise RuntimeError(
+            f"Unable to create sandbox after {attempts} attempts."
+            f" Last conflicting status: {last_status}."
+        )
+
+    @classmethod
+    async def _wait_while_dying(cls, name: str) -> None:
+        """Poll until an in-flight delete/deactivation settles or the record disappears.
+
+        Bounded by TRANSIENT_STATUS_MAX_WAIT_SECONDS. Errors from get (e.g. 404 once
+        the record is gone) end the wait: the caller's create retry decides next.
+        """
+        deadline = time.monotonic() + TRANSIENT_STATUS_MAX_WAIT_SECONDS
+        while time.monotonic() < deadline:
+            await asyncio.sleep(TRANSIENT_STATUS_POLL_SECONDS)
+            try:
+                current = await cls.get(name)
+            except Exception:
+                return
+            status = str(current.status)
+            if status not in TRANSIENT_SANDBOX_STATUSES:
+                return
+            logger.debug(
+                "Sandbox %s still %s; waiting for the record to settle before recreating",
+                name,
+                status,
+            )
 
     @classmethod
     async def from_session(

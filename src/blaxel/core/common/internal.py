@@ -114,3 +114,21 @@ def get_forced_url(type_str: str, name: str) -> str | None:
         return env[singular_env_key]
 
     return None
+
+
+def list_response_items(response):
+    """Unwrap a generated list response into its items.
+
+    Paginated list endpoints return models with a ``data`` attribute, while older
+    platform versions return bare arrays; both unwrap to a plain list here.
+    """
+    from ..client.types import UNSET
+
+    if response is None:
+        return []
+
+    data = getattr(response, "data", response)
+    if data is UNSET or data is None:
+        return []
+
+    return data
