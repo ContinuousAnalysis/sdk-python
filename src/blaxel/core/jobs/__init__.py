@@ -18,18 +18,7 @@ from ..client.models.create_job_execution_request import (
     CreateJobExecutionRequest,
 )
 from ..client.models.job_execution import JobExecution
-from ..client.types import UNSET
-
-
-def _list_response_items(response):
-    if response is None:
-        return []
-
-    data = getattr(response, "data", response)
-    if data is UNSET or data is None:
-        return []
-
-    return data
+from ..common.internal import list_response_items as _list_response_items
 
 
 class BlJobWrapper:

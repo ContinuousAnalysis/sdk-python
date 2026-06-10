@@ -18,6 +18,7 @@ from ..client.client import client
 from ..client.models import Metadata, Volume, VolumeSpec
 from ..client.models.error import Error
 from ..client.types import UNSET
+from ..common.internal import list_response_items as _list_response_items
 from ..common.settings import settings
 
 
@@ -28,17 +29,6 @@ class VolumeAPIError(Exception):
         super().__init__(message)
         self.status_code = status_code
         self.code = code
-
-
-def _list_response_items(response):
-    if response is None:
-        return []
-
-    data = getattr(response, "data", response)
-    if data is UNSET or data is None:
-        return []
-
-    return data
 
 
 class _AsyncDeleteDescriptor:

@@ -294,3 +294,27 @@ async def test_job_alist_executions_unwraps_paginated_response(monkeypatch):
     executions = await BlJob("mk3").alist_executions()
 
     assert executions == []
+
+
+def test_documented_success_html_body_raises_sdk_parse_error():
+    client = Client(base_url="https://api.blaxel.test", raise_on_unexpected_status=True)
+    html = b"<html>edge error page on a 200</html>"
+
+    with pytest.raises(errors.ResponseParseError) as exc_info:
+        create_sandbox._parse_response(
+            client=client,
+            response=response(200, html, "text/html"),
+        )
+
+    assert exc_info.value.status_code == 200
+
+
+def test_documented_success_html_body_returns_none_when_raises_disabled():
+    client = Client(base_url="https://api.blaxel.test", raise_on_unexpected_status=False)
+
+    parsed = create_sandbox._parse_response(
+        client=client,
+        response=response(200, b"<html>edge error page on a 200</html>", "text/html"),
+    )
+
+    assert parsed is None

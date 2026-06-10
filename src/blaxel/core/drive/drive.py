@@ -19,6 +19,7 @@ from ..client.errors import UnexpectedStatus
 from ..client.models import Drive, DriveSpec, Metadata
 from ..client.models.error import Error
 from ..client.types import UNSET
+from ..common.internal import list_response_items as _list_response_items
 from ..common.settings import settings
 
 
@@ -29,17 +30,6 @@ class DriveAPIError(Exception):
         super().__init__(message)
         self.status_code = status_code
         self.code = code
-
-
-def _list_response_items(response):
-    if response is None:
-        return []
-
-    data = getattr(response, "data", response)
-    if data is UNSET or data is None:
-        return []
-
-    return data
 
 
 class _AsyncDeleteDescriptor:
