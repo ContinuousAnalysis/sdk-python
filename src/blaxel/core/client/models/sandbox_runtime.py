@@ -33,8 +33,9 @@ class SandboxRuntime:
         ports (Union[Unset, list['Port']]): Set of ports for a resource
         termination_grace_period_seconds (Union[Unset, int]): Duration in seconds the pod needs to terminate gracefully.
             Defaults to 0 for immediate termination. Example: 30.
-        ttl (Union[Unset, str]): Time-to-live duration after which the sandbox is automatically deleted (e.g., '30m',
-            '24h', '7d') Example: 24h.
+        ttl (Union[Unset, str]): Max-age from creation: the sandbox is deleted this long after it is created, regardless
+            of activity (not an idle timeout). Units s, m, h, d, w (e.g., '30m', '24h', '7d', '2w'). For idle-based cleanup,
+            use a lifecycle expiration policy of type ttl-idle. Example: 24h.
     """
 
     envs: Union[Unset, list["Env"]] = UNSET
@@ -48,7 +49,6 @@ class SandboxRuntime:
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
-
         envs: Union[Unset, list[dict[str, Any]]] = UNSET
         if not isinstance(self.envs, Unset):
             envs = []
