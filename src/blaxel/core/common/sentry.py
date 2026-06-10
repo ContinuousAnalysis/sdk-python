@@ -36,6 +36,8 @@ _IGNORED_EXCEPTIONS = (
     KeyboardInterrupt,  # User interrupt (Ctrl+C)
     SystemExit,  # Program exit
     CancelledError,  # Async task cancellation
+    KeyError,  # Normal control flow for dict-like __getitem__
+    AttributeError,  # Normal control flow for hasattr/getattr patterns
 )
 
 # Optional dependencies that may not be installed - import errors for these are expected
