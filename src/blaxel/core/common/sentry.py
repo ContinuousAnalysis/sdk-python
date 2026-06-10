@@ -1,6 +1,7 @@
 import atexit
 import json
 import logging
+import os
 import sys
 import threading
 import traceback
@@ -227,10 +228,25 @@ def _trace_blaxel_exceptions(frame, event, arg):
     return _trace_blaxel_exceptions
 
 
+def _is_test_environment() -> bool:
+    """Detect if the code is running inside a test framework."""
+    # pytest sets this env var for each running test
+    if os.environ.get("PYTEST_CURRENT_TEST"):
+        return True
+    # Check if pytest has been imported (test session in progress)
+    if "pytest" in sys.modules:
+        return True
+    return False
+
+
 def init_sentry() -> None:
     """Initialize the lightweight Sentry client for SDK error tracking."""
     global _sentry_initialized, _sentry_config, _handlers_registered
     try:
+        # Never report to Sentry during test execution
+        if _is_test_environment():
+            return
+
         dsn = settings.sentry_dsn
         if not dsn:
             return
