@@ -28,6 +28,7 @@ from .custom_domain_metadata import CustomDomainMetadata
 from .custom_domain_spec import CustomDomainSpec
 from .custom_domain_spec_status import CustomDomainSpecStatus
 from .custom_domain_spec_txt_records import CustomDomainSpecTxtRecords
+from .custom_domain_subdomain import CustomDomainSubdomain
 from .delete_drive_response_200 import DeleteDriveResponse200
 from .delete_sandbox_preview_token_response_200 import DeleteSandboxPreviewTokenResponse200
 from .delete_volume_template_version_response_200 import DeleteVolumeTemplateVersionResponse200
@@ -55,6 +56,7 @@ from .error import Error
 from .expiration_policy import ExpirationPolicy
 from .expiration_policy_action import ExpirationPolicyAction
 from .expiration_policy_type import ExpirationPolicyType
+from .firewall_config import FirewallConfig
 from .flavor import Flavor
 from .flavor_type import FlavorType
 from .form import Form
@@ -255,6 +257,7 @@ from .workspace_hipaa_info import WorkspaceHipaaInfo
 from .workspace_hipaa_unsafe import WorkspaceHipaaUnsafe
 from .workspace_resource_counts import WorkspaceResourceCounts
 from .workspace_runtime import WorkspaceRuntime
+from .workspace_sandbox_settings import WorkspaceSandboxSettings
 from .workspace_status import WorkspaceStatus
 from .workspace_user import WorkspaceUser
 from .workspace_user_source import WorkspaceUserSource
@@ -288,6 +291,7 @@ __all__ = (
     "CustomDomainSpec",
     "CustomDomainSpecStatus",
     "CustomDomainSpecTxtRecords",
+    "CustomDomainSubdomain",
     "DeleteDriveResponse200",
     "DeleteSandboxPreviewTokenResponse200",
     "DeleteVolumeTemplateVersionResponse200",
@@ -315,6 +319,7 @@ __all__ = (
     "ExpirationPolicy",
     "ExpirationPolicyAction",
     "ExpirationPolicyType",
+    "FirewallConfig",
     "Flavor",
     "FlavorType",
     "Form",
@@ -511,6 +516,7 @@ __all__ = (
     "WorkspaceHipaaUnsafe",
     "WorkspaceResourceCounts",
     "WorkspaceRuntime",
+    "WorkspaceSandboxSettings",
     "WorkspaceStatus",
     "WorkspaceUser",
     "WorkspaceUserSource",
