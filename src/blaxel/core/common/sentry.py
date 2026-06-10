@@ -176,7 +176,7 @@ def _send_to_sentry(event: dict[str, Any]) -> None:
         pass
 
 
-def _get_exception_key(exc_type, exc_value, frame) -> str:
+def _get_exception_key(exc_type, exc_value) -> str:
     """Generate a unique key for an exception based on type, message, and origin."""
     exc_name = exc_type.__name__ if exc_type else "Unknown"
     exc_msg = str(exc_value) if exc_value else ""
@@ -186,7 +186,7 @@ def _get_exception_key(exc_type, exc_value, frame) -> str:
             tb = tb.tb_next
         origin = f"{tb.tb_frame.f_code.co_filename}:{tb.tb_lineno}"
     else:
-        origin = f"{frame.f_code.co_filename}:{frame.f_lineno}"
+        origin = "unknown"
     return f"{exc_name}:{exc_msg}:{origin}"
 
 
@@ -198,33 +198,34 @@ def _is_optional_dependency_error(exc_type, exc_value) -> bool:
     return False
 
 
-def _trace_blaxel_exceptions(frame, event, arg):
-    """Trace function that captures exceptions from blaxel SDK code."""
-    if event == "exception":
-        exc_type, exc_value, exc_tb = arg
+# Store original hooks to chain calls
+_original_excepthook = sys.excepthook
+_original_threading_excepthook = getattr(threading, "excepthook", None)
 
-        # Skip control flow exceptions (not actual errors)
-        if exc_type and issubclass(exc_type, _IGNORED_EXCEPTIONS):
-            return _trace_blaxel_exceptions
 
-        # Skip import errors for optional dependencies (expected when not installed)
-        if _is_optional_dependency_error(exc_type, exc_value):
-            return _trace_blaxel_exceptions
-
-        filename = frame.f_code.co_filename
-
-        # Only capture if it's from blaxel in site-packages
-        if "site-packages/blaxel" in filename:
-            # Avoid capturing the same exception multiple times using a content-based key
-            exc_key = _get_exception_key(exc_type, exc_value, frame)
-            if exc_key not in _captured_exceptions:
-                _captured_exceptions.add(exc_key)
+def _blaxel_excepthook(exc_type, exc_value, exc_tb):
+    """Custom excepthook that captures unhandled exceptions from SDK code."""
+    if exc_value and _is_from_sdk(exc_value):
+        if not issubclass(exc_type, _IGNORED_EXCEPTIONS):
+            if not _is_optional_dependency_error(exc_type, exc_value):
                 capture_exception(exc_value)
-                # Clean up old exception keys to prevent memory leak
-                if len(_captured_exceptions) > 1000:
-                    _captured_exceptions.clear()
 
-    return _trace_blaxel_exceptions
+    # Call original hook
+    _original_excepthook(exc_type, exc_value, exc_tb)
+
+
+def _blaxel_threading_excepthook(args):
+    """Custom threading excepthook that captures unhandled exceptions from SDK code in threads."""
+    exc_value = args.exc_value
+    exc_type = args.exc_type
+    if exc_value and _is_from_sdk(exc_value):
+        if not issubclass(exc_type, _IGNORED_EXCEPTIONS):
+            if not _is_optional_dependency_error(exc_type, exc_value):
+                capture_exception(exc_value)
+
+    # Call original hook if it exists
+    if _original_threading_excepthook is not None:
+        _original_threading_excepthook(args)
 
 
 def init_sentry() -> None:
@@ -250,9 +251,9 @@ def init_sentry() -> None:
         if not _handlers_registered:
             _handlers_registered = True
 
-            # Install trace function to automatically capture SDK exceptions
-            sys.settrace(_trace_blaxel_exceptions)
-            threading.settrace(_trace_blaxel_exceptions)
+            # Install excepthooks to capture unhandled SDK exceptions
+            sys.excepthook = _blaxel_excepthook
+            threading.excepthook = _blaxel_threading_excepthook
 
             # Register atexit handler to flush pending events
             atexit.register(flush_sentry)
