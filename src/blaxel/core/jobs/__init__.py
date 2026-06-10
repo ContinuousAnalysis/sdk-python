@@ -308,7 +308,11 @@ class BlJob:
         if response.status_code != 200:
             raise Exception(f"Failed to list job executions: {response.status_code}")
 
-        return response.parsed or []
+        parsed = response.parsed
+        if parsed is None:
+            return []
+        items = getattr(parsed, "data", parsed) or []
+        return list(items)
 
     async def alist_executions(self, limit: int = 20, offset: int = 0) -> List[JobExecution]:
         """
@@ -333,7 +337,11 @@ class BlJob:
         if response.status_code != 200:
             raise Exception(f"Failed to list job executions: {response.status_code}")
 
-        return response.parsed or []
+        parsed = response.parsed
+        if parsed is None:
+            return []
+        items = getattr(parsed, "data", parsed) or []
+        return list(items)
 
     def get_execution_status(self, execution_id: str) -> str:
         """

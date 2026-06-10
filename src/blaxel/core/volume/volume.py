@@ -256,7 +256,10 @@ class VolumeInstance:
     @classmethod
     async def list(cls) -> list["VolumeInstance"]:
         response = await list_volumes(client=client)
-        return [cls(volume) for volume in response or []]
+        if response is None:
+            return []
+        items = getattr(response, "data", response) or []
+        return [cls(volume) for volume in items]
 
     @classmethod
     async def create_if_not_exists(
@@ -410,7 +413,10 @@ class SyncVolumeInstance:
     def list(cls) -> List["SyncVolumeInstance"]:
         """List all volumes synchronously."""
         response = list_volumes_sync(client=client)
-        return [cls(volume) for volume in response or []]
+        if response is None:
+            return []
+        items = getattr(response, "data", response) or []
+        return [cls(volume) for volume in items]
 
     @classmethod
     def create_if_not_exists(

@@ -62,6 +62,8 @@ class JobList:
 
         if not src_dict:
             return None
+        if isinstance(src_dict, list):
+            src_dict = {"data": src_dict}
         d = src_dict.copy()
         data = []
         _data = d.pop("data", UNSET)

@@ -357,7 +357,10 @@ class SandboxInstance:
     @classmethod
     async def list(cls) -> List["SandboxInstance"]:
         response = await list_sandboxes(client=client)
-        return [cls(sandbox) for sandbox in response]
+        if response is None:
+            return []
+        items = getattr(response, "data", response) or []
+        return [cls(sandbox) for sandbox in items]
 
     @classmethod
     async def update_metadata(

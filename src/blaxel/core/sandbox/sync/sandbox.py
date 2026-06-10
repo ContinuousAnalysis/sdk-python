@@ -297,7 +297,10 @@ class SyncSandboxInstance:
     @classmethod
     def list(cls) -> List["SyncSandboxInstance"]:
         response = list_sandboxes(client=client)
-        return [cls(sandbox) for sandbox in response]
+        if response is None:
+            return []
+        items = getattr(response, "data", response) or []
+        return [cls(sandbox) for sandbox in items]
 
     @classmethod
     def update_metadata(
