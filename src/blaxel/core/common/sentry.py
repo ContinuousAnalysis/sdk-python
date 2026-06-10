@@ -1,6 +1,7 @@
 import atexit
 import json
 import logging
+import os
 import sys
 import threading
 import traceback
@@ -231,6 +232,10 @@ def init_sentry() -> None:
     """Initialize the lightweight Sentry client for SDK error tracking."""
     global _sentry_initialized, _sentry_config, _handlers_registered
     try:
+        # Don't initialize in test environments
+        if "pytest" in sys.modules or os.environ.get("BL_TYPE") == "test":
+            return
+
         dsn = settings.sentry_dsn
         if not dsn:
             return
