@@ -1,4 +1,5 @@
 """Tests for the Blaxel-Version header in Settings."""
+
 import os
 
 from blaxel.core.common.settings import BLAXEL_API_VERSION, settings

@@ -21,6 +21,7 @@ class ApplicationSpec:
     Attributes:
         enabled (Union[Unset, bool]): When false, the application is disabled and will not serve requests Default: True.
             Example: True.
+        port (Union[Unset, int]): Port the application listens on (default 8080) Example: 8080.
         region (Union[Unset, str]): Region where the application is deployed (e.g. us-pdx-1, eu-lon-1) Example: us-
             pdx-1.
         revision (Union[Unset, AppRevisionConfiguration]): Routing configuration controlling which revision is active
@@ -31,6 +32,7 @@ class ApplicationSpec:
     """
 
     enabled: Union[Unset, bool] = True
+    port: Union[Unset, int] = UNSET
     region: Union[Unset, str] = UNSET
     revision: Union[Unset, "AppRevisionConfiguration"] = UNSET
     revisions: Union[Unset, list["AppRevision"]] = UNSET
@@ -39,6 +41,8 @@ class ApplicationSpec:
 
     def to_dict(self) -> dict[str, Any]:
         enabled = self.enabled
+
+        port = self.port
 
         region = self.region
 
@@ -79,6 +83,8 @@ class ApplicationSpec:
         field_dict.update({})
         if enabled is not UNSET:
             field_dict["enabled"] = enabled
+        if port is not UNSET:
+            field_dict["port"] = port
         if region is not UNSET:
             field_dict["region"] = region
         if revision is not UNSET:
@@ -100,6 +106,8 @@ class ApplicationSpec:
             return None
         d = src_dict.copy()
         enabled = d.pop("enabled", UNSET)
+
+        port = d.pop("port", UNSET)
 
         region = d.pop("region", UNSET)
 
@@ -128,6 +136,7 @@ class ApplicationSpec:
 
         application_spec = cls(
             enabled=enabled,
+            port=port,
             region=region,
             revision=revision,
             revisions=revisions,

@@ -220,11 +220,16 @@ from .sandbox_definition import SandboxDefinition
 from .sandbox_definition_categories_item import SandboxDefinitionCategoriesItem
 from .sandbox_error import SandboxError
 from .sandbox_error_details import SandboxErrorDetails
+from .sandbox_fork_request import SandboxForkRequest
+from .sandbox_fork_response import SandboxForkResponse
+from .sandbox_fork_response_type import SandboxForkResponseType
 from .sandbox_lifecycle import SandboxLifecycle
 from .sandbox_list import SandboxList
 from .sandbox_network import SandboxNetwork
 from .sandbox_runtime import SandboxRuntime
 from .sandbox_runtime_extra_args import SandboxRuntimeExtraArgs
+from .sandbox_snapshot import SandboxSnapshot
+from .sandbox_snapshot_request import SandboxSnapshotRequest
 from .sandbox_spec import SandboxSpec
 from .sandbox_state import SandboxState
 from .share_image_body import ShareImageBody
@@ -487,11 +492,16 @@ __all__ = (
     "SandboxDefinitionCategoriesItem",
     "SandboxError",
     "SandboxErrorDetails",
+    "SandboxForkRequest",
+    "SandboxForkResponse",
+    "SandboxForkResponseType",
     "SandboxLifecycle",
     "SandboxList",
     "SandboxNetwork",
     "SandboxRuntime",
     "SandboxRuntimeExtraArgs",
+    "SandboxSnapshot",
+    "SandboxSnapshotRequest",
     "SandboxSpec",
     "SandboxState",
     "ShareImageBody",

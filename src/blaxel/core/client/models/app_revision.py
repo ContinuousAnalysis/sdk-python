@@ -24,7 +24,8 @@ class AppRevision:
         id (Union[Unset, str]): Unique revision identifier
         memory (Union[Unset, int]): Memory allocation in megabytes. Determines CPU allocation (CPU = memory / 2048).
             Example: 2048.
-        snapshot (Union[Unset, str]): Snapshot reference if created from a fork (optional)
+        snapshot (Union[Unset, str]): Snapshot ID this revision was forked from (optional, only set when created via
+            fork)
     """
 
     image: str
