@@ -6,6 +6,7 @@ import httpx
 from ... import errors
 from ...client import Client
 from ...models.drive_list import DriveList
+from ...models.list_drives_anchor import ListDrivesAnchor
 from ...models.list_drives_sort import ListDrivesSort
 from ...types import UNSET, Response, Unset
 
@@ -16,6 +17,7 @@ def _get_kwargs(
     limit: Union[Unset, int] = 50,
     sort: Union[Unset, ListDrivesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
+    anchor: Union[Unset, ListDrivesAnchor] = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -30,6 +32,12 @@ def _get_kwargs(
     params["sort"] = json_sort
 
     params["q"] = q
+
+    json_anchor: Union[Unset, str] = UNSET
+    if not isinstance(anchor, Unset):
+        json_anchor = anchor.value
+
+    params["anchor"] = json_anchor
 
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
@@ -72,6 +80,7 @@ def sync_detailed(
     limit: Union[Unset, int] = 50,
     sort: Union[Unset, ListDrivesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
+    anchor: Union[Unset, ListDrivesAnchor] = UNSET,
 ) -> Response[Union[Any, DriveList]]:
     """List drives
 
@@ -85,6 +94,7 @@ def sync_detailed(
         limit (Union[Unset, int]):  Default: 50.
         sort (Union[Unset, ListDrivesSort]):
         q (Union[Unset, str]):
+        anchor (Union[Unset, ListDrivesAnchor]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -99,6 +109,7 @@ def sync_detailed(
         limit=limit,
         sort=sort,
         q=q,
+        anchor=anchor,
     )
 
     response = client.get_httpx_client().request(
@@ -115,6 +126,7 @@ def sync(
     limit: Union[Unset, int] = 50,
     sort: Union[Unset, ListDrivesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
+    anchor: Union[Unset, ListDrivesAnchor] = UNSET,
 ) -> Union[Any, DriveList] | None:
     """List drives
 
@@ -128,6 +140,7 @@ def sync(
         limit (Union[Unset, int]):  Default: 50.
         sort (Union[Unset, ListDrivesSort]):
         q (Union[Unset, str]):
+        anchor (Union[Unset, ListDrivesAnchor]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -143,6 +156,7 @@ def sync(
         limit=limit,
         sort=sort,
         q=q,
+        anchor=anchor,
     ).parsed
 
 
@@ -153,6 +167,7 @@ async def asyncio_detailed(
     limit: Union[Unset, int] = 50,
     sort: Union[Unset, ListDrivesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
+    anchor: Union[Unset, ListDrivesAnchor] = UNSET,
 ) -> Response[Union[Any, DriveList]]:
     """List drives
 
@@ -166,6 +181,7 @@ async def asyncio_detailed(
         limit (Union[Unset, int]):  Default: 50.
         sort (Union[Unset, ListDrivesSort]):
         q (Union[Unset, str]):
+        anchor (Union[Unset, ListDrivesAnchor]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -180,6 +196,7 @@ async def asyncio_detailed(
         limit=limit,
         sort=sort,
         q=q,
+        anchor=anchor,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -194,6 +211,7 @@ async def asyncio(
     limit: Union[Unset, int] = 50,
     sort: Union[Unset, ListDrivesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
+    anchor: Union[Unset, ListDrivesAnchor] = UNSET,
 ) -> Union[Any, DriveList] | None:
     """List drives
 
@@ -207,6 +225,7 @@ async def asyncio(
         limit (Union[Unset, int]):  Default: 50.
         sort (Union[Unset, ListDrivesSort]):
         q (Union[Unset, str]):
+        anchor (Union[Unset, ListDrivesAnchor]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -223,5 +242,6 @@ async def asyncio(
             limit=limit,
             sort=sort,
             q=q,
+            anchor=anchor,
         )
     ).parsed

@@ -5,6 +5,7 @@ import httpx
 
 from ... import errors
 from ...client import Client
+from ...models.egress_gateway_usage import EgressGatewayUsage
 from ...types import Response
 
 
@@ -17,16 +18,18 @@ def _get_kwargs() -> dict[str, Any]:
     return _kwargs
 
 
-def _parse_response(*, client: Client, response: httpx.Response) -> Any | None:
+def _parse_response(*, client: Client, response: httpx.Response) -> EgressGatewayUsage | None:
     if response.status_code == 200:
-        return None
+        response_200 = EgressGatewayUsage.from_dict(response.json())
+
+        return response_200
     if client.raise_on_unexpected_status:
         raise errors.UnexpectedStatus(response.status_code, response.content)
     else:
         return None
 
 
-def _build_response(*, client: Client, response: httpx.Response) -> Response[Any]:
+def _build_response(*, client: Client, response: httpx.Response) -> Response[EgressGatewayUsage]:
     return Response(
         status_code=HTTPStatus(response.status_code),
         content=response.content,
@@ -38,7 +41,7 @@ def _build_response(*, client: Client, response: httpx.Response) -> Response[Any
 def sync_detailed(
     *,
     client: Client,
-) -> Response[Any]:
+) -> Response[EgressGatewayUsage]:
     """Egress gateway sandbox attachments
 
      Returns the inverse map (gateway → sandbox names) for the workspace. Used by the egress-IPs UI to
@@ -49,7 +52,7 @@ def sync_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any]
+        Response[EgressGatewayUsage]
     """
 
     kwargs = _get_kwargs()
@@ -61,10 +64,10 @@ def sync_detailed(
     return _build_response(client=client, response=response)
 
 
-async def asyncio_detailed(
+def sync(
     *,
     client: Client,
-) -> Response[Any]:
+) -> EgressGatewayUsage | None:
     """Egress gateway sandbox attachments
 
      Returns the inverse map (gateway → sandbox names) for the workspace. Used by the egress-IPs UI to
@@ -75,7 +78,29 @@ async def asyncio_detailed(
         httpx.TimeoutException: If the request takes longer than Client.timeout.
 
     Returns:
-        Response[Any]
+        EgressGatewayUsage
+    """
+
+    return sync_detailed(
+        client=client,
+    ).parsed
+
+
+async def asyncio_detailed(
+    *,
+    client: Client,
+) -> Response[EgressGatewayUsage]:
+    """Egress gateway sandbox attachments
+
+     Returns the inverse map (gateway → sandbox names) for the workspace. Used by the egress-IPs UI to
+    render attachment counts without fetching the sandboxes listing full client-side.
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        Response[EgressGatewayUsage]
     """
 
     kwargs = _get_kwargs()
@@ -83,3 +108,27 @@ async def asyncio_detailed(
     response = await client.get_async_httpx_client().request(**kwargs)
 
     return _build_response(client=client, response=response)
+
+
+async def asyncio(
+    *,
+    client: Client,
+) -> EgressGatewayUsage | None:
+    """Egress gateway sandbox attachments
+
+     Returns the inverse map (gateway → sandbox names) for the workspace. Used by the egress-IPs UI to
+    render attachment counts without fetching the sandboxes listing full client-side.
+
+    Raises:
+        errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
+        httpx.TimeoutException: If the request takes longer than Client.timeout.
+
+    Returns:
+        EgressGatewayUsage
+    """
+
+    return (
+        await asyncio_detailed(
+            client=client,
+        )
+    ).parsed

@@ -6,6 +6,7 @@ import httpx
 from ... import errors
 from ...client import Client
 from ...models.error import Error
+from ...models.list_sandboxes_anchor import ListSandboxesAnchor
 from ...models.list_sandboxes_sort import ListSandboxesSort
 from ...models.sandbox_list import SandboxList
 from ...types import UNSET, Response, Unset
@@ -18,6 +19,8 @@ def _get_kwargs(
     limit: Union[Unset, int] = 50,
     sort: Union[Unset, ListSandboxesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
+    anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
 ) -> dict[str, Any]:
     params: dict[str, Any] = {}
 
@@ -34,6 +37,14 @@ def _get_kwargs(
     params["sort"] = json_sort
 
     params["q"] = q
+
+    json_anchor: Union[Unset, str] = UNSET
+    if not isinstance(anchor, Unset):
+        json_anchor = anchor.value
+
+    params["anchor"] = json_anchor
+
+    params["externalId"] = external_id
 
     params = {k: v for k, v in params.items() if v is not UNSET and v is not None}
 
@@ -90,6 +101,8 @@ def sync_detailed(
     limit: Union[Unset, int] = 50,
     sort: Union[Unset, ListSandboxesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
+    anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
 ) -> Response[Union[Error, SandboxList]]:
     """List sandboxes
 
@@ -105,6 +118,8 @@ def sync_detailed(
         limit (Union[Unset, int]):  Default: 50.
         sort (Union[Unset, ListSandboxesSort]):
         q (Union[Unset, str]):
+        anchor (Union[Unset, ListSandboxesAnchor]):
+        external_id (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -120,6 +135,8 @@ def sync_detailed(
         limit=limit,
         sort=sort,
         q=q,
+        anchor=anchor,
+        external_id=external_id,
     )
 
     response = client.get_httpx_client().request(
@@ -137,6 +154,8 @@ def sync(
     limit: Union[Unset, int] = 50,
     sort: Union[Unset, ListSandboxesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
+    anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
 ) -> Union[Error, SandboxList] | None:
     """List sandboxes
 
@@ -152,6 +171,8 @@ def sync(
         limit (Union[Unset, int]):  Default: 50.
         sort (Union[Unset, ListSandboxesSort]):
         q (Union[Unset, str]):
+        anchor (Union[Unset, ListSandboxesAnchor]):
+        external_id (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -168,6 +189,8 @@ def sync(
         limit=limit,
         sort=sort,
         q=q,
+        anchor=anchor,
+        external_id=external_id,
     ).parsed
 
 
@@ -179,6 +202,8 @@ async def asyncio_detailed(
     limit: Union[Unset, int] = 50,
     sort: Union[Unset, ListSandboxesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
+    anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
 ) -> Response[Union[Error, SandboxList]]:
     """List sandboxes
 
@@ -194,6 +219,8 @@ async def asyncio_detailed(
         limit (Union[Unset, int]):  Default: 50.
         sort (Union[Unset, ListSandboxesSort]):
         q (Union[Unset, str]):
+        anchor (Union[Unset, ListSandboxesAnchor]):
+        external_id (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -209,6 +236,8 @@ async def asyncio_detailed(
         limit=limit,
         sort=sort,
         q=q,
+        anchor=anchor,
+        external_id=external_id,
     )
 
     response = await client.get_async_httpx_client().request(**kwargs)
@@ -224,6 +253,8 @@ async def asyncio(
     limit: Union[Unset, int] = 50,
     sort: Union[Unset, ListSandboxesSort] = UNSET,
     q: Union[Unset, str] = UNSET,
+    anchor: Union[Unset, ListSandboxesAnchor] = UNSET,
+    external_id: Union[Unset, str] = UNSET,
 ) -> Union[Error, SandboxList] | None:
     """List sandboxes
 
@@ -239,6 +270,8 @@ async def asyncio(
         limit (Union[Unset, int]):  Default: 50.
         sort (Union[Unset, ListSandboxesSort]):
         q (Union[Unset, str]):
+        anchor (Union[Unset, ListSandboxesAnchor]):
+        external_id (Union[Unset, str]):
 
     Raises:
         errors.UnexpectedStatus: If the server returns an undocumented status code and Client.raise_on_unexpected_status is True.
@@ -256,5 +289,7 @@ async def asyncio(
             limit=limit,
             sort=sort,
             q=q,
+            anchor=anchor,
+            external_id=external_id,
         )
     ).parsed
