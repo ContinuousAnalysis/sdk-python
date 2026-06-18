@@ -1,4 +1,5 @@
 import logging
+import time
 import uuid
 import warnings
 from typing import TYPE_CHECKING, Any, Callable, Dict, Union
@@ -28,11 +29,21 @@ from ...client.models.sandbox_error import SandboxError
 from ...client.pagination import PaginatedList, make_paginated_list, normalize_cursor
 from ...client.types import UNSET
 from ...common.settings import settings
-from ..default.sandbox import SandboxAPIError
+from ..default.sandbox import (
+    NON_REUSABLE_SANDBOX_STATUSES,
+    TRANSIENT_SANDBOX_STATUSES,
+    TRANSIENT_STATUS_MAX_WAIT_SECONDS,
+    TRANSIENT_STATUS_POLL_SECONDS,
+    SandboxAPIError,
+    _is_sandbox_conflict,
+    _is_sandbox_not_found,
+    _sandbox_name,
+)
 from ..types import (
     SandboxConfiguration,
     SandboxCreateConfiguration,
     SandboxUpdateMetadata,
+    SandboxUpdateNetwork,
     SessionWithToken,
 )
 from .codegen import SyncSandboxCodegen
@@ -139,6 +150,7 @@ class SyncSandboxInstance:
         cls,
         sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any], None] = None,
         safe: bool = False,
+        create_if_not_exist: bool = False,
     ) -> "SyncSandboxInstance":
         default_name = f"sandbox-{uuid.uuid4().hex[:8]}"
         default_image = "blaxel/base-image:latest"
@@ -252,6 +264,7 @@ class SyncSandboxInstance:
         response = create_sandbox(
             client=client,
             body=sandbox,
+            create_if_not_exist=create_if_not_exist,
         )
 
         # Check if response is an error
@@ -359,12 +372,12 @@ class SyncSandboxInstance:
         return cls(response)
 
     @classmethod
-    def update_ttl(cls, sandbox_name: str, ttl: str) -> "SyncSandboxInstance":
+    def update_ttl(cls, sandbox_name: str, ttl: str | None) -> "SyncSandboxInstance":
         """Update sandbox TTL without recreating it.
 
         Args:
             sandbox_name: The name of the sandbox to update
-            ttl: The new TTL value (e.g., "5m", "1h", "30s")
+            ttl: The new TTL value (e.g., "5m", "1h", "30s"), or None/"" to clear
 
         Returns:
             A new SyncSandboxInstance with updated TTL
@@ -378,8 +391,8 @@ class SyncSandboxInstance:
         if updated_sandbox.spec is None or updated_sandbox.spec.runtime is None:
             raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
 
-        # Update TTL
-        updated_sandbox.spec.runtime.ttl = ttl
+        # Update TTL (None or empty string clears the TTL)
+        updated_sandbox.spec.runtime.ttl = None if ttl is None or ttl == "" else ttl
 
         # Call the update API
         response = update_sandbox(
@@ -392,13 +405,13 @@ class SyncSandboxInstance:
 
     @classmethod
     def update_lifecycle(
-        cls, sandbox_name: str, lifecycle: SandboxLifecycle
+        cls, sandbox_name: str, lifecycle: SandboxLifecycle | None
     ) -> "SyncSandboxInstance":
         """Update sandbox lifecycle configuration without recreating it.
 
         Args:
             sandbox_name: The name of the sandbox to update
-            lifecycle: The new lifecycle configuration
+            lifecycle: The new lifecycle configuration, or None to clear
 
         Returns:
             A new SyncSandboxInstance with updated lifecycle
@@ -407,15 +420,49 @@ class SyncSandboxInstance:
         sandbox_instance = cls.get(sandbox_name)
         sandbox = sandbox_instance.sandbox
 
-        # Prepare the updated sandbox object
+        # Use dict approach to properly serialize null lifecycle
+        body = sandbox.to_dict()
+        if "spec" not in body:
+            raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
+        body["spec"]["lifecycle"] = lifecycle.to_dict() if lifecycle is not None else None
+
+        # Call the update API
+        response = update_sandbox(
+            sandbox_name=sandbox_name,
+            client=client,
+            body=body,
+        )
+
+        return cls(response)
+
+    @classmethod
+    def update_network(
+        cls, sandbox_name: str, network: SandboxUpdateNetwork
+    ) -> "SyncSandboxInstance":
+        """Update sandbox network configuration without recreating it.
+
+        Args:
+            sandbox_name: The name of the sandbox to update
+            network: The new network configuration
+
+        Returns:
+            A new SyncSandboxInstance with updated network configuration
+        """
+        sandbox_instance = cls.get(sandbox_name)
+        sandbox = sandbox_instance.sandbox
+
         updated_sandbox = Sandbox.from_dict(sandbox.to_dict())
         if updated_sandbox.spec is None:
             raise ValueError(f"Sandbox {sandbox_name} has invalid spec")
 
-        # Update lifecycle
-        updated_sandbox.spec.lifecycle = lifecycle
+        if network.network is not None:
+            if isinstance(network.network, dict):
+                updated_sandbox.spec.network = SandboxNetworkModel.from_dict(network.network)
+            else:
+                updated_sandbox.spec.network = network.network
+        else:
+            updated_sandbox.spec.network = UNSET
 
-        # Call the update API
         response = update_sandbox(
             sandbox_name=sandbox_name,
             client=client,
@@ -428,30 +475,70 @@ class SyncSandboxInstance:
     def create_if_not_exists(
         cls, sandbox: Union[Sandbox, SandboxCreateConfiguration, Dict[str, Any]]
     ) -> "SyncSandboxInstance":
-        try:
-            return cls.create(sandbox)
-        except SandboxAPIError as e:
-            if e.status_code == 409 or e.code in [409, "SANDBOX_ALREADY_EXISTS"]:
-                if isinstance(sandbox, SandboxCreateConfiguration):
-                    name = sandbox.name
-                elif isinstance(sandbox, dict):
-                    if "name" in sandbox:
-                        name = sandbox["name"]
-                    elif "metadata" in sandbox and isinstance(sandbox["metadata"], dict):
-                        name = sandbox["metadata"].get("name")
-                    else:
-                        name = None
-                elif isinstance(sandbox, Sandbox):
-                    name = sandbox.metadata.name if sandbox.metadata else None
-                else:
-                    name = None
+        attempts = 3
+        last_status = "unknown"
+        for attempt in range(attempts):
+            final_attempt = attempt == attempts - 1
+            try:
+                return cls.create(sandbox, create_if_not_exist=True)
+            except SandboxAPIError as e:
+                if not _is_sandbox_conflict(e):
+                    raise
+
+                name = _sandbox_name(sandbox)
                 if not name:
                     raise ValueError("Sandbox name is required")
-                sandbox_instance = cls.get(name)
-                if sandbox_instance.status == "TERMINATED":
-                    return cls.create(sandbox)
-                return sandbox_instance
-            raise
+
+                try:
+                    sandbox_instance = cls.get(name)
+                except SandboxAPIError as get_error:
+                    if _is_sandbox_not_found(get_error):
+                        # The record vanished between the create conflict and this status
+                        # check (its deletion just finished); give the control plane a
+                        # beat and retry.
+                        last_status = "vanished"
+                        if not final_attempt:
+                            time.sleep(TRANSIENT_STATUS_POLL_SECONDS)
+                        continue
+                    raise
+
+                if str(sandbox_instance.status) not in NON_REUSABLE_SANDBOX_STATUSES:
+                    return sandbox_instance
+
+                # A delete or deactivation in flight rejects creates until it finishes;
+                # wait it out instead of burning the remaining attempts inside the window.
+                # No point waiting after the last attempt: nothing will use the result.
+                last_status = str(sandbox_instance.status)
+                if last_status in TRANSIENT_SANDBOX_STATUSES and not final_attempt:
+                    cls._wait_while_dying(name)
+
+        raise RuntimeError(
+            f"Unable to create sandbox after {attempts} attempts."
+            f" Last conflicting status: {last_status}."
+        )
+
+    @classmethod
+    def _wait_while_dying(cls, name: str) -> None:
+        """Poll until an in-flight delete/deactivation settles or the record disappears.
+
+        Bounded by TRANSIENT_STATUS_MAX_WAIT_SECONDS. Errors from get (e.g. 404 once
+        the record is gone) end the wait: the caller's create retry decides next.
+        """
+        deadline = time.monotonic() + TRANSIENT_STATUS_MAX_WAIT_SECONDS
+        while time.monotonic() < deadline:
+            time.sleep(TRANSIENT_STATUS_POLL_SECONDS)
+            try:
+                current = cls.get(name)
+            except Exception:
+                return
+            status = str(current.status)
+            if status not in TRANSIENT_SANDBOX_STATUSES:
+                return
+            logger.debug(
+                "Sandbox %s still %s; waiting for the record to settle before recreating",
+                name,
+                status,
+            )
 
     @classmethod
     def from_session(
