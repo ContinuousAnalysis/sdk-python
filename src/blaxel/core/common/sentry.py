@@ -41,6 +41,29 @@ _IGNORED_EXCEPTIONS = (
 # Optional dependencies that may not be installed - import errors for these are expected
 _OPTIONAL_DEPENDENCIES = ("opentelemetry",)
 
+# Optional blaxel framework integration subpackages. Importing any of these
+# requires installing the matching extra (e.g. ``pip install blaxel[openai]``).
+# When the extra -- or one of its transitive dependencies -- is missing, or when
+# the integration files are absent from a stripped/partial install, importing the
+# integration raises an ImportError. That is an expected environment issue, not an
+# SDK bug, so it must not be reported to Sentry.
+_OPTIONAL_INTEGRATION_PACKAGES = (
+    "blaxel.langgraph",
+    "blaxel.llamaindex",
+    "blaxel.openai",
+    "blaxel.crewai",
+    "blaxel.googleadk",
+    "blaxel.livekit",
+    "blaxel.pydantic",
+    "blaxel.telemetry",
+)
+
+# Filesystem fragments used to detect an import error raised while loading one of
+# the optional integration packages above (covers both POSIX and Windows paths).
+_OPTIONAL_INTEGRATION_PATHS = tuple(
+    f"blaxel/{pkg.rsplit('.', 1)[-1]}/" for pkg in _OPTIONAL_INTEGRATION_PACKAGES
+) + tuple(f"blaxel\\{pkg.rsplit('.', 1)[-1]}\\" for pkg in _OPTIONAL_INTEGRATION_PACKAGES)
+
 # SDK path patterns to identify errors originating from our SDK
 _SDK_PATTERNS = [
     "blaxel/",
@@ -191,10 +214,48 @@ def _get_exception_key(exc_type, exc_value, frame) -> str:
 
 
 def _is_optional_dependency_error(exc_type, exc_value) -> bool:
-    """Check if the exception is an import error for an optional dependency."""
-    if exc_type and issubclass(exc_type, ImportError):
-        msg = str(exc_value).lower()
-        return any(dep in msg for dep in _OPTIONAL_DEPENDENCIES)
+    """Check if the exception is an import error that is expected when an optional
+    integration extra is not installed.
+
+    These are environment issues (the user imported, e.g., ``blaxel.openai``
+    without ``pip install blaxel[openai]``, or runs a stripped/partial install
+    that is missing the integration's modules) rather than SDK defects, so they
+    should not be reported to Sentry.
+    """
+    if not (exc_type and issubclass(exc_type, ImportError)):
+        return False
+
+    # Name of the module that could not be imported, when available
+    # (e.g. "blaxel.openai.model", "agents", "opentelemetry.exporter.otlp").
+    missing = getattr(exc_value, "name", None) or ""
+
+    # 1) The optional integration subpackage itself is unavailable -- e.g. a
+    #    stripped/partial install missing ``blaxel/openai/model.py``, surfacing as
+    #    ModuleNotFoundError("No module named 'blaxel.openai.model'").
+    if any(
+        missing == pkg or missing.startswith(f"{pkg}.") for pkg in _OPTIONAL_INTEGRATION_PACKAGES
+    ):
+        return True
+
+    # 2) A known optional third-party dependency could not be imported.
+    msg = str(exc_value).lower()
+    if any(dep in missing for dep in _OPTIONAL_DEPENDENCIES) or any(
+        dep in msg for dep in _OPTIONAL_DEPENDENCIES
+    ):
+        return True
+
+    # 3) A non-blaxel (third-party) import failed while loading an optional
+    #    integration package -- i.e. the matching extra is not installed. Only
+    #    treat non-blaxel modules this way so that genuine SDK import bugs (which
+    #    fail on a "blaxel.*" module) are still captured.
+    if missing and not missing.startswith("blaxel"):
+        tb = getattr(exc_value, "__traceback__", None)
+        while tb:
+            filename = tb.tb_frame.f_code.co_filename
+            if any(path in filename for path in _OPTIONAL_INTEGRATION_PATHS):
+                return True
+            tb = tb.tb_next
+
     return False
 
 
