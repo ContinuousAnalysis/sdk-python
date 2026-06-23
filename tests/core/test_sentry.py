@@ -71,6 +71,25 @@ class TestIsOptionalDependencyError:
         )
         assert _is_optional_dependency_error(type(exc), exc) is True
 
+    def test_wrapped_integration_import_guard_error_is_optional(self):
+        """The friendly optional-extra guard from blaxel.openai stays quiet."""
+        exc = _raise_in_file(
+            "/usr/lib/python3.12/site-packages/blaxel/openai/__init__.py",
+            """
+try:
+    raise ModuleNotFoundError(
+        "No module named 'blaxel.openai.model'",
+        name="blaxel.openai.model",
+    )
+except ImportError as e:
+    raise ImportError(
+        "The openai extra dependencies are required to use the OpenAI Agents integration. "
+        "Install them with: pip install blaxel[openai]"
+    ) from e
+""",
+        )
+        assert _is_optional_dependency_error(type(exc), exc) is True
+
     def test_missing_third_party_dep_outside_integration_is_not_optional(self):
         """A third-party import failure outside any optional integration (e.g. a
         genuine missing core dependency) must still be reported."""

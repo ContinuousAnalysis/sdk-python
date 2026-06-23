@@ -213,7 +213,18 @@ def _get_exception_key(exc_type, exc_value, frame) -> str:
     return f"{exc_name}:{exc_msg}:{origin}"
 
 
-def _is_optional_dependency_error(exc_type, exc_value) -> bool:
+def _has_optional_integration_frame(exc_value) -> bool:
+    """Check whether an exception traceback passed through an integration module."""
+    tb = getattr(exc_value, "__traceback__", None)
+    while tb:
+        filename = tb.tb_frame.f_code.co_filename
+        if any(path in filename for path in _OPTIONAL_INTEGRATION_PATHS):
+            return True
+        tb = tb.tb_next
+    return False
+
+
+def _is_optional_dependency_error(exc_type, exc_value, seen: set[int] | None = None) -> bool:
     """Check if the exception is an import error that is expected when an optional
     integration extra is not installed.
 
@@ -224,6 +235,13 @@ def _is_optional_dependency_error(exc_type, exc_value) -> bool:
     """
     if not (exc_type and issubclass(exc_type, ImportError)):
         return False
+
+    if seen is None:
+        seen = set()
+    exc_id = id(exc_value)
+    if exc_id in seen:
+        return False
+    seen.add(exc_id)
 
     # Name of the module that could not be imported, when available
     # (e.g. "blaxel.openai.model", "agents", "opentelemetry.exporter.otlp").
@@ -244,17 +262,19 @@ def _is_optional_dependency_error(exc_type, exc_value) -> bool:
     ):
         return True
 
-    # 3) A non-blaxel (third-party) import failed while loading an optional
+    # 3) Optional integration import guards wrap the original import failure in
+    #    a friendly ImportError with no module name. Suppress that wrapper when
+    #    its explicit cause is already known optional-import noise.
+    cause = getattr(exc_value, "__cause__", None)
+    if isinstance(cause, ImportError) and _is_optional_dependency_error(type(cause), cause, seen):
+        return True
+
+    # 4) A non-blaxel (third-party) import failed while loading an optional
     #    integration package -- i.e. the matching extra is not installed. Only
     #    treat non-blaxel modules this way so that genuine SDK import bugs (which
     #    fail on a "blaxel.*" module) are still captured.
-    if missing and not missing.startswith("blaxel"):
-        tb = getattr(exc_value, "__traceback__", None)
-        while tb:
-            filename = tb.tb_frame.f_code.co_filename
-            if any(path in filename for path in _OPTIONAL_INTEGRATION_PATHS):
-                return True
-            tb = tb.tb_next
+    if missing and not missing.startswith("blaxel") and _has_optional_integration_frame(exc_value):
+        return True
 
     return False
 
