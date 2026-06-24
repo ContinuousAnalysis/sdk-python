@@ -203,7 +203,7 @@ class DriveInstance:
                 spec=DriveSpec(
                     size=config.size or UNSET,
                     region=config.region or settings.region or UNSET,
-                    permissions=config.permissions or UNSET,
+                    permissions=config.permissions if config.permissions is not None else UNSET,
                 ),
             )
         elif isinstance(config, dict):
@@ -217,7 +217,9 @@ class DriveInstance:
                 spec=DriveSpec(
                     size=drive_config.size or UNSET,
                     region=drive_config.region or settings.region or UNSET,
-                    permissions=drive_config.permissions or UNSET,
+                    permissions=drive_config.permissions
+                    if drive_config.permissions is not None
+                    else UNSET,
                 ),
             )
         else:
@@ -397,7 +399,7 @@ class SyncDriveInstance:
                 spec=DriveSpec(
                     size=config.size or UNSET,
                     region=config.region or settings.region or UNSET,
-                    permissions=config.permissions or UNSET,
+                    permissions=config.permissions if config.permissions is not None else UNSET,
                 ),
             )
         elif isinstance(config, dict):
@@ -411,7 +413,9 @@ class SyncDriveInstance:
                 spec=DriveSpec(
                     size=drive_config.size or UNSET,
                     region=drive_config.region or settings.region or UNSET,
-                    permissions=drive_config.permissions or UNSET,
+                    permissions=drive_config.permissions
+                    if drive_config.permissions is not None
+                    else UNSET,
                 ),
             )
         else:

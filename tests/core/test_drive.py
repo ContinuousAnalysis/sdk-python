@@ -130,6 +130,21 @@ class TestDriveCreateWithPermissions:
         body = mock_create.call_args.kwargs["body"]
         assert body.spec.permissions is UNSET
 
+    @patch("blaxel.core.drive.drive.create_drive", new_callable=AsyncMock)
+    async def test_create_with_empty_permissions_sends_empty_list(self, mock_create):
+        returned_drive = Drive(
+            metadata=Metadata(name="d1"),
+            spec=DriveSpec(permissions=[], region="us-pdx-1"),
+        )
+        mock_create.return_value = returned_drive
+
+        result = await DriveInstance.create({"name": "d1", "region": "us-pdx-1", "permissions": []})
+
+        assert isinstance(result, DriveInstance)
+        body = mock_create.call_args.kwargs["body"]
+        assert body.spec.permissions == []
+        assert body.spec.permissions is not UNSET
+
 
 @pytest.mark.asyncio
 class TestDriveUpdateWithPermissions:
