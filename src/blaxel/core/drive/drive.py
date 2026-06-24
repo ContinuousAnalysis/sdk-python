@@ -25,7 +25,7 @@ from ..client.pagination import (
     make_paginated_list,
     normalize_cursor,
 )
-from ..client.types import UNSET
+from ..client.types import UNSET, Unset
 from ..common.settings import settings
 
 
@@ -124,12 +124,14 @@ class DriveCreateConfiguration:
         labels: Dict[str, str] | None = None,
         size: int | None = None,  # Size in GB
         region: str | None = None,  # Region
+        permissions: list | None = None,
     ):
         self.name = name
         self.display_name = display_name
         self.labels = labels
         self.size = size
         self.region = region
+        self.permissions = permissions
 
     @classmethod
     def from_dict(cls, data: Dict[str, any]) -> "DriveCreateConfiguration":
@@ -139,6 +141,7 @@ class DriveCreateConfiguration:
             labels=data.get("labels"),
             size=data.get("size"),
             region=data.get("region"),
+            permissions=data.get("permissions"),
         )
 
 
@@ -176,6 +179,10 @@ class DriveInstance:
     def region(self):
         return self.drive.spec.region if self.drive.spec else None
 
+    @property
+    def permissions(self):
+        return self.drive.spec.permissions if self.drive.spec else None
+
     @classmethod
     async def create(
         cls, config: Union[DriveCreateConfiguration, Drive, Dict[str, any]]
@@ -196,6 +203,7 @@ class DriveInstance:
                 spec=DriveSpec(
                     size=config.size or UNSET,
                     region=config.region or settings.region or UNSET,
+                    permissions=config.permissions or UNSET,
                 ),
             )
         elif isinstance(config, dict):
@@ -209,6 +217,7 @@ class DriveInstance:
                 spec=DriveSpec(
                     size=drive_config.size or UNSET,
                     region=drive_config.region or settings.region or UNSET,
+                    permissions=drive_config.permissions or UNSET,
                 ),
             )
         else:
@@ -363,6 +372,10 @@ class SyncDriveInstance:
     def region(self):
         return self.drive.spec.region if self.drive.spec else None
 
+    @property
+    def permissions(self):
+        return self.drive.spec.permissions if self.drive.spec else None
+
     @classmethod
     def create(
         cls, config: Union[DriveCreateConfiguration, Drive, Dict[str, any]]
@@ -384,6 +397,7 @@ class SyncDriveInstance:
                 spec=DriveSpec(
                     size=config.size or UNSET,
                     region=config.region or settings.region or UNSET,
+                    permissions=config.permissions or UNSET,
                 ),
             )
         elif isinstance(config, dict):
@@ -397,6 +411,7 @@ class SyncDriveInstance:
                 spec=DriveSpec(
                     size=drive_config.size or UNSET,
                     region=drive_config.region or settings.region or UNSET,
+                    permissions=drive_config.permissions or UNSET,
                 ),
             )
         else:
@@ -547,6 +562,7 @@ async def _update_drive_by_name(
         new_spec = DriveSpec(
             size=updates.size,
             region=updates.region,
+            permissions=updates.permissions,
         )
     elif isinstance(updates, dict):
         config = DriveCreateConfiguration.from_dict(updates)
@@ -558,6 +574,7 @@ async def _update_drive_by_name(
         new_spec = DriveSpec(
             size=config.size,
             region=config.region,
+            permissions=config.permissions,
         )
     else:
         raise ValueError(
@@ -582,6 +599,9 @@ async def _update_drive_by_name(
         region=new_spec.region
         if new_spec and new_spec.region
         else (current_drive.spec.region if current_drive.spec else None),
+        permissions=new_spec.permissions
+        if new_spec and new_spec.permissions and not isinstance(new_spec.permissions, Unset)
+        else (current_drive.spec.permissions if current_drive.spec else UNSET),
     )
 
     body = Drive(
@@ -620,6 +640,7 @@ def _update_drive_by_name_sync(
         new_spec = DriveSpec(
             size=updates.size,
             region=updates.region,
+            permissions=updates.permissions,
         )
     elif isinstance(updates, dict):
         config = DriveCreateConfiguration.from_dict(updates)
@@ -631,6 +652,7 @@ def _update_drive_by_name_sync(
         new_spec = DriveSpec(
             size=config.size,
             region=config.region,
+            permissions=config.permissions,
         )
     else:
         raise ValueError(
@@ -655,6 +677,9 @@ def _update_drive_by_name_sync(
         region=new_spec.region
         if new_spec and new_spec.region
         else (current_drive.spec.region if current_drive.spec else None),
+        permissions=new_spec.permissions
+        if new_spec and new_spec.permissions and not isinstance(new_spec.permissions, Unset)
+        else (current_drive.spec.permissions if current_drive.spec else UNSET),
     )
 
     body = Drive(
