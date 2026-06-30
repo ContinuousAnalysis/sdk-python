@@ -6,6 +6,12 @@ from .agent_runtime import AgentRuntime
 from .agent_runtime_generation import AgentRuntimeGeneration
 from .agent_spec import AgentSpec
 from .api_key import ApiKey
+from .app_revision import AppRevision
+from .app_revision_configuration import AppRevisionConfiguration
+from .app_url import AppUrl
+from .application import Application
+from .application_list import ApplicationList
+from .application_spec import ApplicationSpec
 from .check_workspace_availability_body import CheckWorkspaceAvailabilityBody
 from .cleanup_images_response_200 import CleanupImagesResponse200
 from .configuration import Configuration
@@ -27,14 +33,19 @@ from .custom_domain import CustomDomain
 from .custom_domain_metadata import CustomDomainMetadata
 from .custom_domain_spec import CustomDomainSpec
 from .custom_domain_spec_status import CustomDomainSpecStatus
+from .custom_domain_spec_subject_alternative_names_item import (
+    CustomDomainSpecSubjectAlternativeNamesItem,
+)
 from .custom_domain_spec_txt_records import CustomDomainSpecTxtRecords
-from .custom_domain_subdomain import CustomDomainSubdomain
 from .delete_drive_response_200 import DeleteDriveResponse200
 from .delete_sandbox_preview_token_response_200 import DeleteSandboxPreviewTokenResponse200
 from .delete_volume_template_version_response_200 import DeleteVolumeTemplateVersionResponse200
 from .delete_workspace_service_account_response_200 import DeleteWorkspaceServiceAccountResponse200
 from .drive import Drive
 from .drive_list import DriveList
+from .drive_permission import DrivePermission
+from .drive_permission_labels import DrivePermissionLabels
+from .drive_permission_mode import DrivePermissionMode
 from .drive_spec import DriveSpec
 from .drive_state import DriveState
 from .egress_config import EgressConfig
@@ -121,6 +132,8 @@ from .job_volume import JobVolume
 from .job_volume_type import JobVolumeType
 from .list_agents_anchor import ListAgentsAnchor
 from .list_agents_sort import ListAgentsSort
+from .list_applications_anchor import ListApplicationsAnchor
+from .list_applications_sort import ListApplicationsSort
 from .list_drives_anchor import ListDrivesAnchor
 from .list_drives_sort import ListDrivesSort
 from .list_functions_anchor import ListFunctionsAnchor
@@ -269,6 +282,12 @@ __all__ = (
     "AgentRuntimeGeneration",
     "AgentSpec",
     "ApiKey",
+    "Application",
+    "ApplicationList",
+    "ApplicationSpec",
+    "AppRevision",
+    "AppRevisionConfiguration",
+    "AppUrl",
     "CheckWorkspaceAvailabilityBody",
     "CleanupImagesResponse200",
     "Configuration",
@@ -290,14 +309,17 @@ __all__ = (
     "CustomDomainMetadata",
     "CustomDomainSpec",
     "CustomDomainSpecStatus",
+    "CustomDomainSpecSubjectAlternativeNamesItem",
     "CustomDomainSpecTxtRecords",
-    "CustomDomainSubdomain",
     "DeleteDriveResponse200",
     "DeleteSandboxPreviewTokenResponse200",
     "DeleteVolumeTemplateVersionResponse200",
     "DeleteWorkspaceServiceAccountResponse200",
     "Drive",
     "DriveList",
+    "DrivePermission",
+    "DrivePermissionLabels",
+    "DrivePermissionMode",
     "DriveSpec",
     "DriveState",
     "EgressConfig",
@@ -382,6 +404,8 @@ __all__ = (
     "JobVolumeType",
     "ListAgentsAnchor",
     "ListAgentsSort",
+    "ListApplicationsAnchor",
+    "ListApplicationsSort",
     "ListDrivesAnchor",
     "ListDrivesSort",
     "ListFunctionsAnchor",
