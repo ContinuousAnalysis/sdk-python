@@ -74,12 +74,13 @@ class Client:
 
     def with_cookies(self, cookies: dict[str, str]) -> "Client":
         """Get a new client matching this one with additional cookies"""
-        self._cookies = cookies
+        merged_cookies = {**self._cookies, **cookies}
+        self._cookies = merged_cookies
         if self._client is not None:
             self._client.cookies.update(cookies)
         if self._async_client is not None:
             self._async_client.cookies.update(cookies)
-        return evolve(self, cookies={**self._cookies, **cookies})
+        return evolve(self, cookies=merged_cookies)
 
     def with_timeout(self, timeout: httpx.Timeout) -> "Client":
         """Get a new client matching this one with a new timeout (in seconds)"""
