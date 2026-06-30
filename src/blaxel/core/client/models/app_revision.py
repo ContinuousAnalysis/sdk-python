@@ -24,6 +24,8 @@ class AppRevision:
         id (Union[Unset, str]): Unique revision identifier
         memory (Union[Unset, int]): Memory allocation in megabytes. Determines CPU allocation (CPU = memory / 2048).
             Example: 2048.
+        port (Union[Unset, int]): Port the application listens on for this revision (default uses spec-level port or
+            8080) Example: 8080.
         snapshot (Union[Unset, str]): Snapshot ID this revision was forked from (optional, only set when created via
             fork)
     """
@@ -34,6 +36,7 @@ class AppRevision:
     envs: Union[Unset, list["Env"]] = UNSET
     id: Union[Unset, str] = UNSET
     memory: Union[Unset, int] = UNSET
+    port: Union[Unset, int] = UNSET
     snapshot: Union[Unset, str] = UNSET
     additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
@@ -58,6 +61,8 @@ class AppRevision:
 
         memory = self.memory
 
+        port = self.port
+
         snapshot = self.snapshot
 
         field_dict: dict[str, Any] = {}
@@ -77,6 +82,8 @@ class AppRevision:
             field_dict["id"] = id
         if memory is not UNSET:
             field_dict["memory"] = memory
+        if port is not UNSET:
+            field_dict["port"] = port
         if snapshot is not UNSET:
             field_dict["snapshot"] = snapshot
 
@@ -106,6 +113,8 @@ class AppRevision:
 
         memory = d.pop("memory", UNSET)
 
+        port = d.pop("port", UNSET)
+
         snapshot = d.pop("snapshot", UNSET)
 
         app_revision = cls(
@@ -115,6 +124,7 @@ class AppRevision:
             envs=envs,
             id=id,
             memory=memory,
+            port=port,
             snapshot=snapshot,
         )
 

@@ -3,13 +3,13 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="SandboxRuntimeExtraArgs")
+T = TypeVar("T", bound="SandboxScheduleInputEnv")
 
 
 @_attrs_define
-class SandboxRuntimeExtraArgs:
-    """Extra arguments for sandbox kernel selection. Supported keys: 'iptables', 'nvme', 'nfs'. Values: 'enabled' or
-    'disabled'. Determines which kernel variant the sandbox runs on. Immutable after creation.
+class SandboxScheduleInputEnv:
+    """Environment variables to set for the process. May contain secrets, so values are encrypted at rest and masked in API
+    responses unless an admin requests show_secrets=true.
 
     """
 
@@ -26,10 +26,10 @@ class SandboxRuntimeExtraArgs:
         if not src_dict:
             return None
         d = src_dict.copy()
-        sandbox_runtime_extra_args = cls()
+        sandbox_schedule_input_env = cls()
 
-        sandbox_runtime_extra_args.additional_properties = d
-        return sandbox_runtime_extra_args
+        sandbox_schedule_input_env.additional_properties = d
+        return sandbox_schedule_input_env
 
     @property
     def additional_keys(self) -> list[str]:

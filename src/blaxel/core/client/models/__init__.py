@@ -32,15 +32,21 @@ from .create_workspace_service_account_response_200 import CreateWorkspaceServic
 from .custom_domain import CustomDomain
 from .custom_domain_metadata import CustomDomainMetadata
 from .custom_domain_spec import CustomDomainSpec
+from .custom_domain_spec_domain_type import CustomDomainSpecDomainType
 from .custom_domain_spec_status import CustomDomainSpecStatus
+from .custom_domain_spec_subject_alternative_names_item import (
+    CustomDomainSpecSubjectAlternativeNamesItem,
+)
 from .custom_domain_spec_txt_records import CustomDomainSpecTxtRecords
-from .custom_domain_subdomain import CustomDomainSubdomain
 from .delete_drive_response_200 import DeleteDriveResponse200
 from .delete_sandbox_preview_token_response_200 import DeleteSandboxPreviewTokenResponse200
 from .delete_volume_template_version_response_200 import DeleteVolumeTemplateVersionResponse200
 from .delete_workspace_service_account_response_200 import DeleteWorkspaceServiceAccountResponse200
 from .drive import Drive
 from .drive_list import DriveList
+from .drive_permission import DrivePermission
+from .drive_permission_labels import DrivePermissionLabels
+from .drive_permission_mode import DrivePermissionMode
 from .drive_spec import DriveSpec
 from .drive_state import DriveState
 from .egress_config import EgressConfig
@@ -142,6 +148,9 @@ from .list_models_sort import ListModelsSort
 from .list_pending_image_shares_direction import ListPendingImageSharesDirection
 from .list_policies_anchor import ListPoliciesAnchor
 from .list_policies_sort import ListPoliciesSort
+from .list_sandbox_schedule_executions_sort import ListSandboxScheduleExecutionsSort
+from .list_sandbox_schedules_sort import ListSandboxSchedulesSort
+from .list_sandbox_schedules_type import ListSandboxSchedulesType
 from .list_sandboxes_anchor import ListSandboxesAnchor
 from .list_sandboxes_sort import ListSandboxesSort
 from .list_volumes_anchor import ListVolumesAnchor
@@ -228,6 +237,13 @@ from .sandbox_list import SandboxList
 from .sandbox_network import SandboxNetwork
 from .sandbox_runtime import SandboxRuntime
 from .sandbox_runtime_extra_args import SandboxRuntimeExtraArgs
+from .sandbox_schedule_entry import SandboxScheduleEntry
+from .sandbox_schedule_entry_list import SandboxScheduleEntryList
+from .sandbox_schedule_entry_type import SandboxScheduleEntryType
+from .sandbox_schedule_execution import SandboxScheduleExecution
+from .sandbox_schedule_execution_list import SandboxScheduleExecutionList
+from .sandbox_schedule_input import SandboxScheduleInput
+from .sandbox_schedule_input_env import SandboxScheduleInputEnv
 from .sandbox_snapshot import SandboxSnapshot
 from .sandbox_snapshot_request import SandboxSnapshotRequest
 from .sandbox_spec import SandboxSpec
@@ -308,15 +324,19 @@ __all__ = (
     "CustomDomain",
     "CustomDomainMetadata",
     "CustomDomainSpec",
+    "CustomDomainSpecDomainType",
     "CustomDomainSpecStatus",
+    "CustomDomainSpecSubjectAlternativeNamesItem",
     "CustomDomainSpecTxtRecords",
-    "CustomDomainSubdomain",
     "DeleteDriveResponse200",
     "DeleteSandboxPreviewTokenResponse200",
     "DeleteVolumeTemplateVersionResponse200",
     "DeleteWorkspaceServiceAccountResponse200",
     "Drive",
     "DriveList",
+    "DrivePermission",
+    "DrivePermissionLabels",
+    "DrivePermissionMode",
     "DriveSpec",
     "DriveState",
     "EgressConfig",
@@ -418,6 +438,9 @@ __all__ = (
     "ListPoliciesSort",
     "ListSandboxesAnchor",
     "ListSandboxesSort",
+    "ListSandboxScheduleExecutionsSort",
+    "ListSandboxSchedulesSort",
+    "ListSandboxSchedulesType",
     "ListVolumesAnchor",
     "ListVolumesSort",
     "LiteVolume",
@@ -500,6 +523,13 @@ __all__ = (
     "SandboxNetwork",
     "SandboxRuntime",
     "SandboxRuntimeExtraArgs",
+    "SandboxScheduleEntry",
+    "SandboxScheduleEntryList",
+    "SandboxScheduleEntryType",
+    "SandboxScheduleExecution",
+    "SandboxScheduleExecutionList",
+    "SandboxScheduleInput",
+    "SandboxScheduleInputEnv",
     "SandboxSnapshot",
     "SandboxSnapshotRequest",
     "SandboxSpec",

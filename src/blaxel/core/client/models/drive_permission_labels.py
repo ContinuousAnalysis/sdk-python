@@ -3,17 +3,14 @@ from typing import Any, TypeVar
 from attrs import define as _attrs_define
 from attrs import field as _attrs_field
 
-T = TypeVar("T", bound="SandboxRuntimeExtraArgs")
+T = TypeVar("T", bound="DrivePermissionLabels")
 
 
 @_attrs_define
-class SandboxRuntimeExtraArgs:
-    """Extra arguments for sandbox kernel selection. Supported keys: 'iptables', 'nvme', 'nfs'. Values: 'enabled' or
-    'disabled'. Determines which kernel variant the sandbox runs on. Immutable after creation.
+class DrivePermissionLabels:
+    """Labels that the workload must have. All labels must match (AND logic). Empty labels match all workloads."""
 
-    """
-
-    additional_properties: dict[str, str] = _attrs_field(init=False, factory=dict)
+    additional_properties: dict[str, Any] = _attrs_field(init=False, factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         field_dict: dict[str, Any] = {}
@@ -26,19 +23,19 @@ class SandboxRuntimeExtraArgs:
         if not src_dict:
             return None
         d = src_dict.copy()
-        sandbox_runtime_extra_args = cls()
+        drive_permission_labels = cls()
 
-        sandbox_runtime_extra_args.additional_properties = d
-        return sandbox_runtime_extra_args
+        drive_permission_labels.additional_properties = d
+        return drive_permission_labels
 
     @property
     def additional_keys(self) -> list[str]:
         return list(self.additional_properties.keys())
 
-    def __getitem__(self, key: str) -> str:
+    def __getitem__(self, key: str) -> Any:
         return self.additional_properties[key]
 
-    def __setitem__(self, key: str, value: str) -> None:
+    def __setitem__(self, key: str, value: Any) -> None:
         self.additional_properties[key] = value
 
     def __delitem__(self, key: str) -> None:
