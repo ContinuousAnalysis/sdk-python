@@ -132,7 +132,7 @@ def test_autoload_sets_control_plane_user_agent():
     autoload()
 
     assert client._headers["Blaxel-Version"] == settings.api_version
-    assert client._headers["User-Agent"] == settings.headers["User-Agent"]
+    assert client._headers["User-Agent"] == settings.user_agent
     assert client._headers["User-Agent"].startswith("blaxel/sdk/python/")
 
 

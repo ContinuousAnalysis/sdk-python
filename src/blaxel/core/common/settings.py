@@ -118,11 +118,16 @@ class Settings:
         return _get_int_env("BL_SANDBOX_READ_RETRIES", 5)
 
     @property
+    def user_agent(self) -> str:
+        """Get the SDK User-Agent without reading credentials."""
+        os_arch = _get_os_arch()
+        return f"blaxel/sdk/python/{self.version} ({os_arch}) blaxel/{self.commit}"
+
+    @property
     def headers(self) -> Dict[str, str]:
         """Get the headers for API requests."""
         headers = self.auth.get_headers()
-        os_arch = _get_os_arch()
-        headers["User-Agent"] = f"blaxel/sdk/python/{self.version} ({os_arch}) blaxel/{self.commit}"
+        headers["User-Agent"] = self.user_agent
         headers["Blaxel-Version"] = self.api_version
         return headers
 

@@ -29,7 +29,7 @@ def autoload() -> None:
     client.with_headers(
         {
             "Blaxel-Version": settings.api_version,
-            "User-Agent": settings.headers["User-Agent"],
+            "User-Agent": settings.user_agent,
         }
     )
 
