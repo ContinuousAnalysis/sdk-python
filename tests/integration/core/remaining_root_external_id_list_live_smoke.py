@@ -11,6 +11,7 @@ from blaxel.core.client.api.jobs.list_jobs import asyncio as list_jobs
 from blaxel.core.client.api.models.list_models import asyncio as list_models
 from blaxel.core.client.api.policies.list_policies import asyncio as list_policies
 from blaxel.core.client.client import client
+from blaxel.core.client.models.error import Error
 
 suffix = "".join(random.choice(string.ascii_lowercase + string.digits) for _ in range(8))
 missing = f"missing-{suffix}"
@@ -32,7 +33,9 @@ async def main():
         result = await check()
         if result is None:
             raise AssertionError(f"{label} external_id list returned None")
-        data = getattr(result, "data", []) or []
+        if isinstance(result, Error):
+            raise AssertionError(f"{label} external_id list returned error: {result}")
+        data = result if isinstance(result, list) else (getattr(result, "data", []) or [])
         if len(data) != 0:
             raise AssertionError(
                 f"{label} external_id filter returned {len(data)} resource(s) for missing external_id {missing}"
