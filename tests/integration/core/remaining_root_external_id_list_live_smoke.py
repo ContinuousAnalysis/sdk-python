@@ -32,6 +32,11 @@ async def main():
         result = await check()
         if result is None:
             raise AssertionError(f"{label} external_id list returned None")
+        data = getattr(result, "data", []) or []
+        if len(data) != 0:
+            raise AssertionError(
+                f"{label} external_id filter returned {len(data)} resource(s) for missing external_id {missing}"
+            )
         print(f"{label} external_id list filter smoke passed")
 
 
